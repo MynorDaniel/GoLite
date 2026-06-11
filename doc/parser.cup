@@ -1,0 +1,155 @@
+package com.mynor.golite.parser;
+
+import java_cup.runtime.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.mynor.golite.lexer.*;
+
+parser code {:
+    private final List<String> erroresSintacticos = new ArrayList<>();
+    public Symbol ultimoError = null;
+
+    public List<String> getErroresSintacticos(){
+        return erroresSintacticos;
+    }
+
+    private int linea(Symbol s) {
+        return s == null ? -1 : s.left;
+    }
+
+    private int columna(Symbol s) {
+        return s == null ? -1 : s.right;
+    }
+
+    private String ubicacion(Symbol s) {
+        if (s == null) return "fin de entrada";
+        return "línea " + linea(s) + ", columna " + columna(s);
+    }
+
+    @Override
+    public void report_error(String message, Object info) {
+        if (info instanceof Symbol s) {
+            ultimoError = s;
+            erroresSintacticos.add(
+                "Error sintáctico en " + ubicacion(s) + ": " + message
+            );
+        } else {
+            erroresSintacticos.add("Error sintáctico: " + message);
+        }
+    }
+
+    @Override
+    public void syntax_error(Symbol cur_token) {
+        ultimoError = cur_token;
+        if (cur_token != null) {
+            erroresSintacticos.add(
+                "Token inesperado en " + ubicacion(cur_token)
+            );
+        } else {
+            erroresSintacticos.add("Error sintáctico: fin de entrada inesperado");
+        }
+    }
+
+    @Override
+    public void unrecovered_syntax_error(Symbol cur_token) throws Exception {
+        ultimoError = cur_token;
+        if (cur_token != null) {
+            erroresSintacticos.add(
+                "No se pudo recuperar del error en " + ubicacion(cur_token)
+            );
+        } else {
+            erroresSintacticos.add(
+                "No se pudo recuperar del error al final de la entrada"
+            );
+        }
+        throw new Exception("Error sintáctico: " + (ultimoError.left) + ":" + (ultimoError.right));
+    }
+:};
+
+scan with {:
+    return getScanner().next_token();
+:};
+
+
+// Palabras reservadas y tipos
+terminal PACKAGE, IMPORT, FUNC, MAIN, VAR, CONST, IF, ELSE, SWITCH, CASE, DEFAULT;
+terminal FOR, RANGE, BREAK, CONTINUE, RETURN, STRUCT, INTERFACE;
+terminal INT, FLOAT64, STRING, BOOL, RUNE_TYPE, NIL;
+terminal TRUE, FALSE;
+
+// Literales
+terminal String ENTERO;
+terminal String FLOTANTE;
+terminal String CADENA;
+terminal String IDENTIFICADOR;
+
+// Rune literal
+terminal String RUNE_LIT;
+
+// Operadores
+terminal MAS, MENOS, MULT, DIV, MODULO, NOT;
+terminal IGUAL, NO_IGUAL, MENOR, MAYOR, MENOR_IGUAL, MAYOR_IGUAL;
+terminal AND, OR;
+terminal ASIG, DECL_ASIG;
+terminal PLUS_ASIG, MINUS_ASIG;
+
+// Delimitadores
+terminal PAR_IZQ, PAR_DER;
+terminal COR_IZQ, COR_DER;
+terminal LLA_IZQ, LLA_DER;
+terminal COMA, PUNTO_COMA, DOS_PUNTOS, PUNTO;
+
+// Funciones built-in
+terminal APPEND, LEN;
+terminal FMT, PRINTLN;
+terminal SLICES, INDEX;
+terminal STRINGS, JOIN;
+terminal STRCONV, ATOI, PARSEFLOAT;
+terminal REFLECT, TYPEOF;
+
+// No-terminales
+non terminal Object programa;
+non terminal Object paquete;
+non terminal Object lista_imports;
+non terminal Object declaraciones;
+non terminal Object declaracion;
+
+
+start with programa;
+
+
+
+programa ::=
+    paquete declaraciones
+    {: RESULT = null; :}
+    ;
+
+paquete ::=
+    PACKAGE IDENTIFICADOR PUNTO_COMA
+    {: RESULT = null; :}
+    ;
+
+lista_imports ::=
+    /* vacío */
+    {: RESULT = new ArrayList<>(); :}
+    |
+    lista_imports:li IMPORT CADENA PUNTO_COMA
+    {: RESULT = li; :}
+    ;
+
+declaraciones ::=
+    /* vacío */
+    {: RESULT = new ArrayList<>(); :}
+    |
+    declaraciones:d declaracion:decl
+    {: RESULT = d; :}
+    ;
+
+declaracion ::=
+    VAR IDENTIFICADOR INT ASIG ENTERO PUNTO_COMA
+    {: RESULT = null; :}
+    |
+    FUNC MAIN PAR_IZQ PAR_DER LLA_IZQ LLA_DER
+    {: RESULT = null; :}
+    ;

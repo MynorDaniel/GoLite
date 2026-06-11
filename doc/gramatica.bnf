@@ -1,0 +1,14 @@
+<programa> ::= <lista_declaraciones>
+
+<lista_declaraciones> ::= <lista_declaraciones> <declaracion> | ;
+
+x
+  :
+  | x A
+  ;
+
+declaracion = declaracion_var funcion struct
+
+
+
+<expresion> ::= <operacion> | <variable> | <llamada_funcion>
