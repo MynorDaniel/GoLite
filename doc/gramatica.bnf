@@ -2,13 +2,134 @@
 
 <lista_declaraciones> ::= <lista_declaraciones> <declaracion> | ;
 
-x
-  :
-  | x A
-  ;
+<declaracion> ::= <funcion> | <declaracion_variable> | <asignacion_variable>
+
+<declaracion_variable> ::= VAR IDENTIFICADOR <tipo> ASIG <expresion> | VAR IDENTIFICADOR <tipo> | IDENTIFICADOR DECL_ASIG <expresion>
+
+<asignacion_variable> ::= IDENTIFICADOR ASIG <expresion> | IDENTIFICADOR PLUS_ASIG <expresion> | IDENTIFICADOR MINUS_ASIG <expresion> | IDENTIFICADOR MAS MAS | IDENTIFICADOR MENOS MENOS  
+
+
+
+<instrucciones> ::= <instrucciones> <instruccion>
+                  | /* vacío */
+                  ;
+
+<instruccion> ::= <declaracion_variable>
+                | <asignacion_variable>
+                | <sent_if>
+                | <sent_switch>
+                | <sent_for>
+                | <sent_break>
+                | <sent_continue>
+                | <sent_return>
+                | <llamada_funcion>
+                ;
+
+<sent_if> ::= IF <expresion> <bloque>
+            | IF <expresion> <bloque> ELSE <bloque>
+            | IF <expresion> <bloque> ELSE <sent_if>
+            | IF PAR_IZQ <expresion> PAR_DER <bloque>
+            | IF PAR_IZQ <expresion> PAR_DER <bloque> ELSE <bloque>
+            | IF PAR_IZQ <expresion> PAR_DER <bloque> ELSE <sent_if>
+            ;
+
+<sent_switch> ::= SWITCH <expresion> LLA_IZQ <lista_cases> LLA_DER
+                | SWITCH <expresion> LLA_IZQ <lista_cases> <caso_default> LLA_DER
+                ;
+
+<lista_cases> ::= <lista_cases> <caso>
+                | /* vacío */
+                ;
+
+<caso> ::= CASE <expresion> DOS_PUNTOS <instrucciones>
+         ;
+
+<caso_default> ::= DEFAULT DOS_PUNTOS <instrucciones>
+                 ;
+
+<sent_for> ::=
+
+      FOR <expresion> <bloque>
+
+
+    | FOR <sent_for_init> PUNTO_COMA <expresion> PUNTO_COMA <sent_for_post> <bloque>
+
+    | FOR IDENTIFICADOR COMA IDENTIFICADOR DECL_ASIG RANGE <expresion> <bloque>
+    | FOR IDENTIFICADOR COMA IDENTIFICADOR DECL_ASIG RANGE <expresion> <bloque>
+    ;
+
+<sent_for_init> ::= <declaracion_variable>
+                  | <asignacion_variable>
+                  ;
+
+<sent_for_post> ::= <asignacion_variable>
+                  | IDENTIFICADOR PLUS_ASIG <expresion>
+                  | IDENTIFICADOR MINUS_ASIG <expresion>
+                  ;
+
+<sent_break>    ::= BREAK    ;
+<sent_continue> ::= CONTINUE ;
+<sent_return>   ::= RETURN <expresion>
+                  | RETURN
+                  ;
+
+
+
+
+
+<funcion>::= 
 
 declaracion = declaracion_var funcion struct
 
+<bloque> ::= LLA_IZQ <instrucciones> LLA_DER;
 
 
-<expresion> ::= <operacion> | <variable> | <llamada_funcion>
+
+<expresion> ::= <operacion> | <variable> | <llamada_funcion> | <literal>
+
+<literal> ::= IDENTIFICADOR | 
+
+<expresion> ::=
+      <expresion> OR <expresion>
+    | <expresion> AND <expresion>
+
+    | <expresion> IGUAL <expresion>
+    | <expresion> NO_IGUAL <expresion>
+    | <expresion> MAYOR <expresion>
+    | <expresion> MENOR <expresion>
+    | <expresion> MAYOR_IGUAL <expresion>
+    | <expresion> MENOR_IGUAL <expresion>
+
+    | <expresion> MAS <expresion>
+    | <expresion> MENOS <expresion>
+    | <expresion> MULT <expresion>
+    | <expresion> DIV <expresion>
+    | <expresion> MODULO <expresion>
+
+    | MENOS <expresion>
+    | NOT <expresion>
+
+    | PAR_IZQ <expresion> PAR_DER
+
+    | <operando>
+;
+
+<operando> ::=
+      IDENTIFICADOR
+
+    | IDENTIFICADOR
+      COR_IZQ <expresion> COR_DER
+
+    | IDENTIFICADOR
+      COR_IZQ <expresion> COR_DER
+      COR_IZQ <expresion> COR_DER
+
+    | ENTERO
+    | FLOTANTE
+    | CADENA
+    | RUNE_LIT
+
+    | TRUE
+    | FALSE
+    | NIL
+;
