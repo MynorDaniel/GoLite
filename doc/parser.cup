@@ -4,13 +4,13 @@ import java_cup.runtime.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mynor.golite.lexer.*;
+import com.mynor.golite.ast.*;
 
 parser code {:
     private final List<String> erroresSintacticos = new ArrayList<>();
     public Symbol ultimoError = null;
 
-    public List<String> getErroresSintacticos(){
+    public List<String> getErroresSintacticos() {
         return erroresSintacticos;
     }
 
@@ -44,7 +44,8 @@ parser code {:
         ultimoError = cur_token;
         if (cur_token != null) {
             erroresSintacticos.add(
-                "Token inesperado en " + ubicacion(cur_token)
+                "Token inesperado '" + (cur_token.value != null ? cur_token.value : cur_token.sym)
+                + "' en " + ubicacion(cur_token)
             );
         } else {
             erroresSintacticos.add("Error sintáctico: fin de entrada inesperado");
@@ -59,62 +60,98 @@ parser code {:
                 "No se pudo recuperar del error en " + ubicacion(cur_token)
             );
         } else {
-            erroresSintacticos.add(
-                "No se pudo recuperar del error al final de la entrada"
-            );
+            erroresSintacticos.add("No se pudo recuperar del error al final de la entrada");
         }
-        throw new Exception("Error sintáctico: " + (ultimoError.left) + ":" + (ultimoError.right));
+        throw new Exception(
+            "Error sintáctico irrecuperable en " +
+            (ultimoError != null ? ubicacion(ultimoError) : "posición desconocida")
+        );
     }
 :};
 
 scan with {:
     return getScanner().next_token();
 :};
-
-
-// Palabras reservadas y tipos
-terminal PACKAGE, IMPORT, FUNC, MAIN, VAR, CONST, IF, ELSE, SWITCH, CASE, DEFAULT;
-terminal FOR, RANGE, BREAK, CONTINUE, RETURN, STRUCT, INTERFACE;
-terminal INT, FLOAT64, STRING, BOOL, RUNE_TYPE, NIL;
+terminal String  IDENTIFICADOR;
+terminal Integer ENTERO;
+terminal Double  FLOTANTE;
+terminal String  CADENA;
+terminal Character RUNE_LIT;
+terminal INT, FLOAT64, STRING, BOOL, RUNE, NIL;
 terminal TRUE, FALSE;
-
-// Literales
-terminal String ENTERO;
-terminal String FLOTANTE;
-terminal String CADENA;
-terminal String IDENTIFICADOR;
-
-// Rune literal
-terminal String RUNE_LIT;
-
-// Operadores
-terminal MAS, MENOS, MULT, DIV, MODULO, NOT;
-terminal IGUAL, NO_IGUAL, MENOR, MAYOR, MENOR_IGUAL, MAYOR_IGUAL;
-terminal AND, OR;
-terminal ASIG, DECL_ASIG;
-terminal PLUS_ASIG, MINUS_ASIG;
-
-// Delimitadores
-terminal PAR_IZQ, PAR_DER;
-terminal COR_IZQ, COR_DER;
-terminal LLA_IZQ, LLA_DER;
-terminal COMA, PUNTO_COMA, DOS_PUNTOS, PUNTO;
-
-// Funciones built-in
+terminal FUNC, MAIN, VAR;
+terminal STRUCT;
+terminal IF, ELSE;
+terminal SWITCH, CASE, DEFAULT;
+terminal FOR, RANGE;
+terminal BREAK, CONTINUE, RETURN;
 terminal APPEND, LEN;
 terminal FMT, PRINTLN;
 terminal SLICES, INDEX;
 terminal STRINGS, JOIN;
 terminal STRCONV, ATOI, PARSEFLOAT;
 terminal REFLECT, TYPEOF;
+terminal PLUS_ASIG, MINUS_ASIG;
+terminal IGUAL, NO_IGUAL;
+terminal MAYOR_IGUAL, MENOR_IGUAL;
+terminal AND, OR;
+terminal DECL_ASIG;
+terminal ASIG;
+terminal MAS, MENOS, MULT, DIV, MODULO;
+terminal NOT;
+terminal MAYOR, MENOR, UMENOS;
+terminal DOS_PUNTOS, PUNTO, COMA, PUNTO_COMA;
+terminal PAR_IZQ, PAR_DER;
+terminal COR_IZQ, COR_DER;
+terminal LLA_IZQ, LLA_DER;
 
-// No-terminales
-non terminal Object programa;
-non terminal Object paquete;
-non terminal Object lista_imports;
-non terminal Object declaraciones;
-non terminal Object declaracion;
-
+non terminal NodoPrograma programa;
+non terminal List<NodoDeclaracionGlobal>    lista_globales;
+non terminal NodoDeclaracionGlobal          declaracion_global;
+non terminal NodoTipo                       tipo;
+non terminal NodoTipoSlice                  tipo_slice;
+non terminal NodoDeclVar                    declaracion_variable;
+non terminal NodoAsignVar                   asignacion_variable;
+non terminal NodoDefStruct                  def_struct;
+non terminal List<NodoAtributoStruct>       lista_atributos_struct;
+non terminal NodoAtributoStruct             atributo_struct;
+non terminal NodoInstanciaStruct            instancia_struct;
+non terminal List<NodoCampoStruct>          lista_campos_struct;
+non terminal NodoCampoStruct                campo_struct;
+non terminal NodoDefFuncion                 def_funcion;
+non terminal List<NodoParametro>            lista_parametros;
+non terminal NodoParametro                  parametro;
+non terminal NodoBloque                     bloque;
+non terminal List<NodoInstruccion>          instrucciones;
+non terminal NodoInstruccion                instruccion;
+non terminal NodoIf                         sent_if;
+non terminal NodoSwitch                     sent_switch;
+non terminal List<NodoCaso>                 lista_cases;
+non terminal NodoCaso                       caso;
+non terminal NodoCasoDefault                caso_default;
+non terminal NodoFor                        sent_for;
+non terminal NodoInstruccion                sent_for_init;
+non terminal NodoInstruccion                sent_for_post;
+non terminal NodoBreak                      sent_break;
+non terminal NodoContinue                   sent_continue;
+non terminal NodoReturn                     sent_return;
+non terminal NodoLlamadaFuncion             llamada_funcion;
+non terminal NodoLlamadaMetodo              llamada_metodo_struct;
+non terminal List<NodoExpresion>            lista_argumentos;
+non terminal NodoPrintln                    sent_println;
+non terminal NodoAtoi                       expr_atoi;
+non terminal NodoParsefloat                 expr_parsefloat;
+non terminal NodoTypeof                     expr_typeof;
+non terminal NodoSlicesIndex                expr_slices_index;
+non terminal NodoStringsJoin                expr_strings_join;
+non terminal NodoLen                        expr_len;
+non terminal NodoAppend                     expr_append;
+non terminal NodoExpresion                  expresion;
+non terminal NodoExpresion                  operando;
+non terminal NodoLiteralSlice               literal_slice;
+non terminal List<NodoLiteralSlice>         lista_filas_slice;
+non terminal NodoLiteralSlice               fila_slice;
+non terminal List<NodoExpresion>            lista_expresiones;
 precedence left OR;
 precedence left AND;
 precedence left IGUAL, NO_IGUAL;
@@ -122,43 +159,481 @@ precedence left MAYOR, MENOR, MAYOR_IGUAL, MENOR_IGUAL;
 precedence left MAS, MENOS;
 precedence left MULT, DIV, MODULO;
 precedence right NOT, UMENOS;
-precedence left COR_IZQ, PAR_IZQ;
-
-
+precedence left COR_IZQ, PAR_IZQ, LLA_IZQ;
 start with programa;
 
-
-
 programa ::=
-    paquete declaraciones
-    {: RESULT = null; :}
+      lista_globales:l
+      {: RESULT = new NodoPrograma(l, lleft, lleft); :}
     ;
 
-paquete ::=
-    PACKAGE IDENTIFICADOR PUNTO_COMA
-    {: RESULT = null; :}
+lista_globales ::=
+      lista_globales:l declaracion_global:d
+      {: l.add(d); RESULT = l; :}
+    | /* vacío */
+      {: RESULT = new ArrayList<>(); :}
     ;
 
-lista_imports ::=
-    /* vacío */
-    {: RESULT = new ArrayList<>(); :}
+declaracion_global ::=
+      def_funcion:f     {: RESULT = f; :}
+    | def_struct:s      {: RESULT = s; :}
+    | declaracion_variable:v {: RESULT = v; :}
+    | asignacion_variable:a  {: RESULT = a; :}
+    | error
+      {: RESULT = new NodoError("Error en declaración global", 0, 0); :}
+    ;
+
+tipo ::=
+      INT           {: RESULT = new NodoTipo("int",     INTleft, INTright); :}
+    | FLOAT64       {: RESULT = new NodoTipo("float64", FLOAT64left, FLOAT64right); :}
+    | STRING        {: RESULT = new NodoTipo("string",  STRINGleft, STRINGright); :}
+    | BOOL          {: RESULT = new NodoTipo("bool",    BOOLleft, BOOLright); :}
+    | RUNE          {: RESULT = new NodoTipo("rune",    RUNEleft, RUNEright); :}
+    | IDENTIFICADOR:id {: RESULT = new NodoTipo(id, IDENTIFICADORleft, IDENTIFICADORright); :}
+    ;
+
+tipo_slice ::=
+      COR_IZQ COR_DER tipo:t
+      {: RESULT = new NodoTipoSlice(t, 1, tleft, tright); :}
+    | COR_IZQ COR_DER COR_IZQ COR_DER tipo:t
+      {: RESULT = new NodoTipoSlice(t, 2, tleft, tright); :}
+    ;
+
+declaracion_variable ::=
+      VAR IDENTIFICADOR:id tipo:t ASIG expresion:e
+      {: RESULT = new NodoDeclVar(id, t, null, e, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | VAR IDENTIFICADOR:id tipo:t
+      {: RESULT = new NodoDeclVar(id, t, null, null, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | VAR IDENTIFICADOR:id tipo_slice:ts
+      {: RESULT = new NodoDeclVar(id, null, ts, null, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id DECL_ASIG expresion:e
+      {: RESULT = new NodoDeclVar(id, null, null, e, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | VAR error
+      {: RESULT = new NodoDeclVar("?", null, null, null, 0, 0);
+         parser.report_error("Declaración de variable malformada", null); :}
+    ;
+
+asignacion_variable ::=
+      IDENTIFICADOR:id ASIG expresion:e
+      {: RESULT = new NodoAsignVar(id, null, null, "=", e, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id PLUS_ASIG expresion:e
+      {: RESULT = new NodoAsignVar(id, null, null, "+=", e, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id MINUS_ASIG expresion:e
+      {: RESULT = new NodoAsignVar(id, null, null, "-=", e, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id MAS MAS
+      {: RESULT = new NodoAsignVar(id, null, null, "++", null, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id MENOS MENOS
+      {: RESULT = new NodoAsignVar(id, null, null, "--", null, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id COR_IZQ expresion:idx COR_DER ASIG expresion:e
+      {: RESULT = new NodoAsignVar(id, idx, null, "=", e, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id COR_IZQ expresion:i COR_DER COR_IZQ expresion:j COR_DER ASIG expresion:e
+      {: RESULT = new NodoAsignVar(id, i, j, "=", e, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:obj PUNTO IDENTIFICADOR:campo ASIG expresion:e
+      {: RESULT = new NodoAsignCampo(obj, campo, e, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id ASIG error
+      {: RESULT = new NodoAsignVar(id, null, null, "=", null, IDENTIFICADORleft, IDENTIFICADORright);
+         parser.report_error("Expresión inválida en asignación", null); :}
+    ;
+
+def_struct ::=
+      STRUCT IDENTIFICADOR:id LLA_IZQ lista_atributos_struct:attrs LLA_DER
+      {: RESULT = new NodoDefStruct(id, attrs, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | STRUCT IDENTIFICADOR:id LLA_IZQ error LLA_DER
+      {: RESULT = new NodoDefStruct(id, new ArrayList<>(), IDENTIFICADORleft, IDENTIFICADORright);
+         parser.report_error("Error en definición de struct " + id, null); :}
+    | STRUCT error LLA_IZQ lista_atributos_struct:attrs LLA_DER
+      {: RESULT = new NodoDefStruct("?", attrs, 0, 0);
+         parser.report_error("Nombre de struct inválido", null); :}
+    ;
+
+lista_atributos_struct ::=
+      lista_atributos_struct:l atributo_struct:a
+      {: l.add(a); RESULT = l; :}
+    | atributo_struct:a
+      {: List<NodoAtributoStruct> l = new ArrayList<>(); l.add(a); RESULT = l; :}
+    | error PUNTO_COMA
+      {: RESULT = new ArrayList<>();
+         parser.report_error("Atributo de struct inválido", null); :}
+    ;
+
+atributo_struct ::=
+      tipo:t IDENTIFICADOR:id PUNTO_COMA
+      {: RESULT = new NodoAtributoStruct(id, t, null, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | tipo_slice:ts IDENTIFICADOR:id PUNTO_COMA
+      {: RESULT = new NodoAtributoStruct(id, null, ts, IDENTIFICADORleft, IDENTIFICADORright); :}
+    ;
+
+instancia_struct ::=
+      IDENTIFICADOR:id LLA_IZQ lista_campos_struct:campos LLA_DER
+      {: RESULT = new NodoInstanciaStruct(id, campos, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id LLA_IZQ LLA_DER
+      {: RESULT = new NodoInstanciaStruct(id, new ArrayList<>(), IDENTIFICADORleft, IDENTIFICADORright); :}
+    ;
+
+lista_campos_struct ::=
+      lista_campos_struct:l COMA campo_struct:c
+      {: l.add(c); RESULT = l; :}
+    | campo_struct:c
+      {: List<NodoCampoStruct> l = new ArrayList<>(); l.add(c); RESULT = l; :}
+    ;
+
+campo_struct ::=
+      IDENTIFICADOR:id DOS_PUNTOS expresion:e
+      {: RESULT = new NodoCampoStruct(id, e, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id DOS_PUNTOS error
+      {: RESULT = new NodoCampoStruct(id, null, IDENTIFICADORleft, IDENTIFICADORright);
+         parser.report_error("Valor inválido para campo " + id, null); :}
+    ;
+
+def_funcion ::=
+      FUNC:f MAIN PAR_IZQ PAR_DER bloque:b
+      {: RESULT = new NodoDefFuncion("main", new ArrayList<>(), null, null, true, b, fleft, fright); :}
+    | FUNC:f IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER bloque:b
+      {: RESULT = new NodoDefFuncion(id, ps, null, null, false, b, fleft, fright); :}
+    | FUNC:f IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER tipo:t bloque:b
+      {: RESULT = new NodoDefFuncion(id, ps, t, null, false, b, fleft, fright); :}
+    | FUNC:f IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER tipo_slice:ts bloque:b
+      {: RESULT = new NodoDefFuncion(id, ps, null, ts, false, b, fleft, fright); :}
+    | FUNC:f PAR_IZQ IDENTIFICADOR:ref IDENTIFICADOR:struct PAR_DER IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER bloque:b
+      {: RESULT = new NodoDefFuncionStruct(struct, ref, id, ps, null, null, b, fleft, fright); :}
+    | FUNC:f PAR_IZQ IDENTIFICADOR:ref IDENTIFICADOR:struct PAR_DER IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER tipo:t bloque:b
+      {: RESULT = new NodoDefFuncionStruct(struct, ref, id, ps, t, null, b, fleft, fright); :}
+    | FUNC:f PAR_IZQ IDENTIFICADOR:ref IDENTIFICADOR:struct PAR_DER IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER tipo_slice:ts bloque:b
+      {: RESULT = new NodoDefFuncionStruct(struct, ref, id, ps, null, ts, b, fleft, fright); :}
+    | FUNC:f IDENTIFICADOR:id PAR_IZQ error PAR_DER bloque:b
+      {: RESULT = new NodoDefFuncion(id, new ArrayList<>(), null, null, false, b, fleft, fright);
+         parser.report_error("Parámetros inválidos en función " + id, null); :}
+    | FUNC:f error bloque:b
+      {: RESULT = new NodoDefFuncion("?", new ArrayList<>(), null, null, false, b, fleft, fright);
+         parser.report_error("Declaración de función malformada", null); :}
+    ;
+
+lista_parametros ::=
+      lista_parametros:l COMA parametro:p
+      {: l.add(p); RESULT = l; :}
+    | parametro:p
+      {: List<NodoParametro> l = new ArrayList<>(); l.add(p); RESULT = l; :}
     |
-    lista_imports:li IMPORT CADENA PUNTO_COMA
-    {: RESULT = li; :}
+      {: RESULT = new ArrayList<>(); :}
     ;
 
-declaraciones ::=
-    /* vacío */
-    {: RESULT = new ArrayList<>(); :}
-    |
-    declaraciones:d declaracion:decl
-    {: RESULT = d; :}
+parametro ::=
+      IDENTIFICADOR:id tipo:t
+      {: RESULT = new NodoParametro(id, t, null, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id tipo_slice:ts
+      {: RESULT = new NodoParametro(id, null, ts, IDENTIFICADORleft, IDENTIFICADORright); :}
     ;
 
-declaracion ::=
-    VAR IDENTIFICADOR INT ASIG ENTERO PUNTO_COMA
-    {: RESULT = null; :}
-    |
-    FUNC MAIN PAR_IZQ PAR_DER LLA_IZQ LLA_DER
-    {: RESULT = null; :}
+bloque ::=
+      LLA_IZQ instrucciones:is LLA_DER
+      {: RESULT = new NodoBloque(is, LLA_IZQleft, LLA_IZQright); :}
     ;
+
+instrucciones ::=
+      instrucciones:l instruccion:i
+      {: l.add(i); RESULT = l; :}
+    |
+      {: RESULT = new ArrayList<>(); :}
+    ;
+
+instruccion ::=
+      declaracion_variable:v  {: RESULT = v; :}
+    | asignacion_variable:a   {: RESULT = a; :}
+    | bloque:b                {: RESULT = b; :}
+    | sent_if:s               {: RESULT = s; :}
+    | sent_switch:s           {: RESULT = s; :}
+    | sent_for:s              {: RESULT = s; :}
+    | sent_break:s            {: RESULT = s; :}
+    | sent_continue:s         {: RESULT = s; :}
+    | sent_return:s           {: RESULT = s; :}
+    | sent_println:s          {: RESULT = s; :}
+    | llamada_funcion:c       {: RESULT = c; :}
+    | llamada_metodo_struct:c {: RESULT = c; :}
+    | error
+      {: RESULT = new NodoError("Instrucción inválida", 0, 0);
+         parser.report_error("Instrucción no reconocida", null); :}
+    ;
+sent_if ::=
+      IF:i expresion:cond bloque:b
+      {: RESULT = new NodoIf(cond, b, null, null, ileft, iright); :}
+    | IF:i expresion:cond bloque:b ELSE bloque:be
+      {: RESULT = new NodoIf(cond, b, be, null, ileft, iright); :}
+    | IF:i expresion:cond bloque:b ELSE sent_if:ei
+      {: RESULT = new NodoIf(cond, b, null, ei, ileft, iright); :}
+    | IF:i PAR_IZQ expresion:cond PAR_DER bloque:b
+      {: RESULT = new NodoIf(cond, b, null, null, ileft, iright); :}
+    | IF:i PAR_IZQ expresion:cond PAR_DER bloque:b ELSE bloque:be
+      {: RESULT = new NodoIf(cond, b, be, null, ileft, iright); :}
+    | IF:i PAR_IZQ expresion:cond PAR_DER bloque:b ELSE sent_if:ei
+      {: RESULT = new NodoIf(cond, b, null, ei, ileft, iright); :}
+    | IF:i error bloque:b
+      {: RESULT = new NodoIf(null, b, null, null, ileft, iright);
+         parser.report_error("Condición de if inválida", null); :}
+    ;
+sent_switch ::=
+      SWITCH:s expresion:e LLA_IZQ lista_cases:cs LLA_DER
+      {: RESULT = new NodoSwitch(e, cs, null, sleft, sright); :}
+    | SWITCH:s expresion:e LLA_IZQ lista_cases:cs caso_default:d LLA_DER
+      {: RESULT = new NodoSwitch(e, cs, d, sleft, sright); :}
+    | SWITCH:s error LLA_IZQ lista_cases:cs LLA_DER
+      {: RESULT = new NodoSwitch(null, cs, null, sleft, sright);
+         parser.report_error("Expresión de switch inválida", null); :}
+    ;
+
+lista_cases ::=
+      lista_cases:l caso:c
+      {: l.add(c); RESULT = l; :}
+    |
+      {: RESULT = new ArrayList<>(); :}
+    ;
+
+caso ::=
+      CASE:c expresion:e DOS_PUNTOS instrucciones:is
+      {: RESULT = new NodoCaso(e, is, cleft, cright); :}
+    | CASE:c error DOS_PUNTOS instrucciones:is
+      {: RESULT = new NodoCaso(null, is, cleft, cright);
+         parser.report_error("Expresión de case inválida", null); :}
+    ;
+
+caso_default ::=
+      DEFAULT:d DOS_PUNTOS instrucciones:is
+      {: RESULT = new NodoCasoDefault(is, dleft, dright); :}
+    ;
+sent_for ::=
+      FOR:f expresion:cond bloque:b
+      {: RESULT = new NodoFor(null, cond, null, null, null, b, false, fleft, fright); :}
+    | FOR:f sent_for_init:init PUNTO_COMA expresion:cond PUNTO_COMA sent_for_post:post bloque:b
+      {: RESULT = new NodoFor(init, cond, post, null, null, b, false, fleft, fright); :}
+    | FOR:f IDENTIFICADOR:idx COMA IDENTIFICADOR:val DECL_ASIG RANGE expresion:e bloque:b
+      {: RESULT = new NodoFor(null, null, null, idx, val, b, true, fleft, fright); :}
+    | FOR:f error bloque:b
+      {: RESULT = new NodoFor(null, null, null, null, null, b, false, fleft, fright);
+         parser.report_error("Encabezado de for inválido", null); :}
+    ;
+
+sent_for_init ::=
+      declaracion_variable:v {: RESULT = v; :}
+    | asignacion_variable:a  {: RESULT = a; :}
+    ;
+
+sent_for_post ::=
+      asignacion_variable:a         {: RESULT = a; :}
+    ;
+sent_break ::=
+      BREAK:b
+      {: RESULT = new NodoBreak(bleft, bright); :}
+    ;
+
+sent_continue ::=
+      CONTINUE:c
+      {: RESULT = new NodoContinue(cleft, cright); :}
+    ;
+
+sent_return ::=
+      RETURN:r expresion:e
+      {: RESULT = new NodoReturn(e, rleft, rright); :}
+    | RETURN:r
+      {: RESULT = new NodoReturn(null, rleft, rright); :}
+      %prec NOT
+    ;
+
+llamada_funcion ::=
+      IDENTIFICADOR:id PAR_IZQ lista_argumentos:args PAR_DER
+      {: RESULT = new NodoLlamadaFuncion(id, args, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id PAR_IZQ error PAR_DER
+      {: RESULT = new NodoLlamadaFuncion(id, new ArrayList<>(), IDENTIFICADORleft, IDENTIFICADORright);
+         parser.report_error("Argumentos inválidos en llamada a " + id, null); :}
+    ;
+
+llamada_metodo_struct ::=
+      IDENTIFICADOR:obj PUNTO IDENTIFICADOR:met PAR_IZQ lista_argumentos:args PAR_DER
+      {: RESULT = new NodoLlamadaMetodo(obj, met, args, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:obj PUNTO IDENTIFICADOR:met PAR_IZQ error PAR_DER
+      {: RESULT = new NodoLlamadaMetodo(obj, met, new ArrayList<>(), IDENTIFICADORleft, IDENTIFICADORright);
+         parser.report_error("Argumentos inválidos en llamada a " + obj + "." + met, null); :}
+    ;
+
+lista_argumentos ::=
+      lista_argumentos:l COMA expresion:e
+      {: l.add(e); RESULT = l; :}
+    | expresion:e
+      {: List<NodoExpresion> l = new ArrayList<>(); l.add(e); RESULT = l; :}
+    |
+      {: RESULT = new ArrayList<>(); :}
+    ;
+
+sent_println ::=
+      FMT:f PUNTO PRINTLN PAR_IZQ lista_argumentos:args PAR_DER
+      {: RESULT = new NodoPrintln(args, fleft, fright); :}
+    | FMT:f PUNTO PRINTLN PAR_IZQ error PAR_DER
+      {: RESULT = new NodoPrintln(new ArrayList<>(), fleft, fright);
+         parser.report_error("Argumentos inválidos en fmt.Println", null); :}
+    ;
+
+expr_atoi ::=
+      STRCONV:s PUNTO ATOI PAR_IZQ expresion:e PAR_DER
+      {: RESULT = new NodoAtoi(e, sleft, sright); :}
+    | STRCONV:s PUNTO ATOI PAR_IZQ error PAR_DER
+      {: RESULT = new NodoAtoi(null, sleft, sright);
+         parser.report_error("Argumento inválido en strconv.Atoi", null); :}
+    ;
+
+expr_parsefloat ::=
+      STRCONV:s PUNTO PARSEFLOAT PAR_IZQ expresion:e PAR_DER
+      {: RESULT = new NodoParsefloat(e, sleft, sright); :}
+    | STRCONV:s PUNTO PARSEFLOAT PAR_IZQ error PAR_DER
+      {: RESULT = new NodoParsefloat(null, sleft, sright);
+         parser.report_error("Argumento inválido en strconv.ParseFloat", null); :}
+    ;
+
+expr_typeof ::=
+      REFLECT:r PUNTO TYPEOF PAR_IZQ expresion:e PAR_DER
+      {: RESULT = new NodoTypeof(e, rleft, rright); :}
+    | REFLECT:r PUNTO TYPEOF PAR_IZQ error PAR_DER
+      {: RESULT = new NodoTypeof(null, rleft, rright);
+         parser.report_error("Argumento inválido en reflect.TypeOf", null); :}
+    ;
+
+expr_slices_index ::=
+      SLICES:s PUNTO INDEX PAR_IZQ expresion:slice COMA expresion:val PAR_DER
+      {: RESULT = new NodoSlicesIndex(slice, val, sleft, sright); :}
+    | SLICES:s PUNTO INDEX PAR_IZQ error PAR_DER
+      {: RESULT = new NodoSlicesIndex(null, null, sleft, sright);
+         parser.report_error("Argumentos inválidos en slices.Index", null); :}
+    ;
+
+expr_strings_join ::=
+      STRINGS:s PUNTO JOIN PAR_IZQ expresion:slice COMA expresion:sep PAR_DER
+      {: RESULT = new NodoStringsJoin(slice, sep, sleft, sright); :}
+    | STRINGS:s PUNTO JOIN PAR_IZQ error PAR_DER
+      {: RESULT = new NodoStringsJoin(null, null, sleft, sright);
+         parser.report_error("Argumentos inválidos en strings.Join", null); :}
+    ;
+
+expr_len ::=
+      LEN:l PAR_IZQ expresion:e PAR_DER
+      {: RESULT = new NodoLen(e, lleft, lright); :}
+    | LEN:l PAR_IZQ error PAR_DER
+      {: RESULT = new NodoLen(null, lleft, lright);
+         parser.report_error("Argumento inválido en len()", null); :}
+    ;
+
+expr_append ::=
+      APPEND:a PAR_IZQ expresion:slice COMA expresion:val PAR_DER
+      {: RESULT = new NodoAppend(slice, val, aleft, aright); :}
+    | APPEND:a PAR_IZQ error PAR_DER
+      {: RESULT = new NodoAppend(null, null, aleft, aright);
+         parser.report_error("Argumentos inválidos en append()", null); :}
+    ;
+
+expresion ::=
+      expresion:l OR  expresion:r
+      {: RESULT = new NodoBinaria("||", l, r, lleft, lleft); :}
+    | expresion:l AND expresion:r
+      {: RESULT = new NodoBinaria("&&", l, r, lleft, lleft); :}
+    | expresion:l IGUAL expresion:r
+      {: RESULT = new NodoBinaria("==", l, r, lleft, lleft); :}
+    | expresion:l NO_IGUAL expresion:r
+      {: RESULT = new NodoBinaria("!=", l, r, lleft, lleft); :}
+    | expresion:l MAYOR expresion:r
+      {: RESULT = new NodoBinaria(">",  l, r, lleft, lleft); :}
+    | expresion:l MENOR expresion:r
+      {: RESULT = new NodoBinaria("<",  l, r, lleft, lleft); :}
+    | expresion:l MAYOR_IGUAL expresion:r
+      {: RESULT = new NodoBinaria(">=", l, r, lleft, lleft); :}
+    | expresion:l MENOR_IGUAL expresion:r
+      {: RESULT = new NodoBinaria("<=", l, r, lleft, lleft); :}
+    | expresion:l MAS   expresion:r
+      {: RESULT = new NodoBinaria("+",  l, r, lleft, lleft); :}
+    | expresion:l MENOS expresion:r
+      {: RESULT = new NodoBinaria("-",  l, r, lleft, lleft); :}
+    | expresion:l MULT  expresion:r
+      {: RESULT = new NodoBinaria("*",  l, r, lleft, lleft); :}
+    | expresion:l DIV   expresion:r
+      {: RESULT = new NodoBinaria("/",  l, r, lleft, lleft); :}
+    | expresion:l MODULO expresion:r
+      {: RESULT = new NodoBinaria("%",  l, r, lleft, lleft); :}
+    | MENOS:m expresion:e
+      {: RESULT = new NodoUnaria("-", e, mleft, mright); :}
+      %prec UMENOS
+    | NOT:n expresion:e
+      {: RESULT = new NodoUnaria("!", e, nleft, nright); :}
+    | PAR_IZQ expresion:e PAR_DER
+      {: RESULT = new NodoAgrupacion(e, eleft, eright); :}
+    | operando:o
+      {: RESULT = o; :}
+    ;
+
+operando ::=
+      ENTERO:v
+      {: RESULT = new NodoLiteral("int", v, ENTEROleft, ENTEROright); :}
+    | FLOTANTE:v
+      {: RESULT = new NodoLiteral("float64", v, FLOTANTEleft, FLOTANTEright); :}
+    | CADENA:v
+      {: RESULT = new NodoLiteral("string", v, CADENAleft, CADENAright); :}
+    | RUNE_LIT:v
+      {: RESULT = new NodoLiteral("rune", v, RUNE_LITleft, RUNE_LITright); :}
+    | TRUE:v
+      {: RESULT = new NodoLiteral("bool", true, TRUEleft, TRUEright); :}
+    | FALSE:v
+      {: RESULT = new NodoLiteral("bool", false, FALSEleft, FALSEright); :}
+    | NIL:v
+      {: RESULT = new NodoLiteral("nil", null, NILleft, NILright); :}
+    | IDENTIFICADOR:id
+      {: RESULT = new NodoIdentificador(id, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id COR_IZQ expresion:idx COR_DER
+      {: RESULT = new NodoAccesoSlice(id, idx, null, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:id COR_IZQ expresion:i COR_DER COR_IZQ expresion:j COR_DER
+      {: RESULT = new NodoAccesoSlice(id, i, j, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | IDENTIFICADOR:obj PUNTO IDENTIFICADOR:campo
+      {: RESULT = new NodoAccesoCampo(obj, campo, IDENTIFICADORleft, IDENTIFICADORright); :}
+    | llamada_funcion:c       {: RESULT = c; :}
+    | llamada_metodo_struct:c {: RESULT = c; :}
+    | sent_println:s          {: RESULT = s; :}
+    | expr_atoi:e             {: RESULT = e; :}
+    | expr_parsefloat:e       {: RESULT = e; :}
+    | expr_typeof:e           {: RESULT = e; :}
+    | expr_slices_index:e     {: RESULT = e; :}
+    | expr_strings_join:e     {: RESULT = e; :}
+    | expr_len:e              {: RESULT = e; :}
+    | expr_append:e           {: RESULT = e; :}
+    | instancia_struct:s      {: RESULT = s; :}
+    | literal_slice:s         {: RESULT = s; :}
+    ;
+
+literal_slice ::=
+      COR_IZQ:c COR_DER tipo:t LLA_IZQ lista_expresiones:es LLA_DER
+      {: RESULT = new NodoLiteralSlice(t, null, es, 1, cleft, cright); :}
+    | COR_IZQ:c COR_DER tipo:t LLA_IZQ LLA_DER
+      {: RESULT = new NodoLiteralSlice(t, null, new ArrayList<>(), 1, cleft, cright); :}
+    | COR_IZQ:c COR_DER COR_IZQ COR_DER tipo:t LLA_IZQ lista_filas_slice:fs LLA_DER
+      {: RESULT = new NodoLiteralSlice(t, fs, null, 2, cleft, cright); :}
+    | COR_IZQ:c COR_DER COR_IZQ COR_DER tipo:t LLA_IZQ LLA_DER
+      {: RESULT = new NodoLiteralSlice(t, new ArrayList<>(), null, 2, cleft, cright); :}
+    | COR_IZQ:c COR_DER tipo:t LLA_IZQ error LLA_DER
+      {: RESULT = new NodoLiteralSlice(t, null, new ArrayList<>(), 1, cleft, cright);
+         parser.report_error("Contenido de slice inválido", null); :}
+    ;
+
+lista_filas_slice ::=
+      lista_filas_slice:l COMA fila_slice:f
+      {: l.add(f); RESULT = l; :}
+    | fila_slice:f
+      {: List<NodoLiteralSlice> l = new ArrayList<>(); l.add(f); RESULT = l; :}
+    ;
+
+fila_slice ::=
+      LLA_IZQ:l lista_expresiones:es LLA_DER
+      {: RESULT = new NodoLiteralSlice(null, null, es, 1, lleft, lright); :}
+    | LLA_IZQ:l error LLA_DER
+      {: RESULT = new NodoLiteralSlice(null, null, new ArrayList<>(), 1, lleft, lright);
+         parser.report_error("Fila de slice inválida", null); :}
+    ;
+
+lista_expresiones ::=
+      lista_expresiones:l COMA expresion:e
+      {: l.add(e); RESULT = l; :}
+    | expresion:e
+      {: List<NodoExpresion> l = new ArrayList<>(); l.add(e); RESULT = l; :}
+    ;
+

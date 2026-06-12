@@ -8,89 +8,97 @@ package com.mynor.golite.parser;
 /** CUP generated class containing symbol constants. */
 public class Terminal {
   /* terminals */
-  public static final int LEN = 62;
-  public static final int STRCONV = 69;
-  public static final int IDENTIFICADOR = 31;
-  public static final int BOOL = 23;
-  public static final int TYPEOF = 73;
-  public static final int MENOR_IGUAL = 43;
-  public static final int APPEND = 61;
-  public static final int MINUS_ASIG = 50;
-  public static final int RUNE_TYPE = 24;
-  public static final int CONST = 7;
-  public static final int COR_IZQ = 53;
-  public static final int RUNE_LIT = 32;
-  public static final int MAYOR = 42;
-  public static final int FUNC = 4;
-  public static final int JOIN = 68;
-  public static final int PAR_DER = 52;
-  public static final int LLA_IZQ = 55;
-  public static final int STRUCT = 18;
-  public static final int FALSE = 27;
-  public static final int NOT = 38;
-  public static final int NIL = 25;
-  public static final int VAR = 6;
-  public static final int DOS_PUNTOS = 59;
-  public static final int PACKAGE = 2;
-  public static final int STRINGS = 67;
-  public static final int PARSEFLOAT = 71;
-  public static final int PRINTLN = 64;
-  public static final int PUNTO_COMA = 58;
-  public static final int COMA = 57;
-  public static final int ENTERO = 28;
-  public static final int MODULO = 37;
-  public static final int TRUE = 26;
-  public static final int IGUAL = 39;
-  public static final int INDEX = 66;
-  public static final int REFLECT = 72;
-  public static final int INTERFACE = 19;
-  public static final int SWITCH = 10;
-  public static final int FOR = 13;
-  public static final int DIV = 36;
-  public static final int FLOAT64 = 21;
-  public static final int RETURN = 17;
-  public static final int MULT = 35;
-  public static final int ELSE = 9;
-  public static final int NO_IGUAL = 40;
-  public static final int MENOS = 34;
-  public static final int MENOR = 41;
-  public static final int MAS = 33;
-  public static final int BREAK = 15;
-  public static final int INT = 20;
-  public static final int PAR_IZQ = 51;
+  public static final int STRINGS = 35;
+  public static final int PAR_DER = 66;
+  public static final int MULT = 54;
+  public static final int REFLECT = 40;
+  public static final int STRCONV = 37;
+  public static final int ENTERO = 3;
+  public static final int CASE = 22;
+  public static final int DOS_PUNTOS = 61;
+  public static final int CONTINUE = 27;
+  public static final int INT = 7;
+  public static final int PRINTLN = 32;
+  public static final int COR_DER = 68;
+  public static final int FOR = 24;
+  public static final int DECL_ASIG = 50;
+  public static final int NOT = 57;
+  public static final int AND = 48;
+  public static final int IDENTIFICADOR = 2;
+  public static final int IGUAL = 44;
+  public static final int APPEND = 29;
+  public static final int RANGE = 25;
+  public static final int PARSEFLOAT = 39;
+  public static final int TYPEOF = 41;
+  public static final int NIL = 12;
+  public static final int OR = 49;
+  public static final int LLA_DER = 70;
+  public static final int BOOL = 10;
+  public static final int DIV = 55;
+  public static final int ATOI = 38;
+  public static final int UMENOS = 60;
+  public static final int MAIN = 16;
+  public static final int IF = 19;
+  public static final int PUNTO_COMA = 64;
+  public static final int RUNE_LIT = 6;
   public static final int EOF = 0;
-  public static final int PUNTO = 60;
-  public static final int DEFAULT = 12;
-  public static final int COR_DER = 54;
-  public static final int IMPORT = 3;
-  public static final int MAIN = 5;
-  public static final int PLUS_ASIG = 49;
-  public static final int OR = 46;
+  public static final int ASIG = 51;
+  public static final int RETURN = 28;
+  public static final int TRUE = 13;
   public static final int error = 1;
-  public static final int SLICES = 65;
-  public static final int LLA_DER = 56;
-  public static final int CONTINUE = 16;
-  public static final int IF = 8;
-  public static final int FLOTANTE = 29;
-  public static final int ATOI = 70;
-  public static final int FMT = 63;
-  public static final int ASIG = 47;
-  public static final int CASE = 11;
-  public static final int CADENA = 30;
-  public static final int STRING = 22;
-  public static final int RANGE = 14;
-  public static final int AND = 45;
-  public static final int DECL_ASIG = 48;
-  public static final int MAYOR_IGUAL = 44;
+  public static final int COMA = 63;
+  public static final int FLOAT64 = 8;
+  public static final int CADENA = 5;
+  public static final int MODULO = 56;
+  public static final int MENOS = 53;
+  public static final int MENOR = 59;
+  public static final int PLUS_ASIG = 42;
+  public static final int JOIN = 36;
+  public static final int PAR_IZQ = 65;
+  public static final int BREAK = 26;
+  public static final int RUNE = 11;
+  public static final int NO_IGUAL = 45;
+  public static final int SWITCH = 21;
+  public static final int MAYOR = 58;
+  public static final int ELSE = 20;
+  public static final int PUNTO = 62;
+  public static final int INDEX = 34;
+  public static final int FUNC = 15;
+  public static final int MINUS_ASIG = 43;
+  public static final int MAYOR_IGUAL = 46;
+  public static final int DEFAULT = 23;
+  public static final int COR_IZQ = 67;
+  public static final int LEN = 30;
+  public static final int SLICES = 33;
+  public static final int STRING = 9;
+  public static final int FMT = 31;
+  public static final int MENOR_IGUAL = 47;
+  public static final int FALSE = 14;
+  public static final int STRUCT = 18;
+  public static final int LLA_IZQ = 69;
+  public static final int VAR = 17;
+  public static final int FLOTANTE = 4;
+  public static final int MAS = 52;
   public static final String[] terminalNames = new String[] {
   "EOF",
   "error",
-  "PACKAGE",
-  "IMPORT",
+  "IDENTIFICADOR",
+  "ENTERO",
+  "FLOTANTE",
+  "CADENA",
+  "RUNE_LIT",
+  "INT",
+  "FLOAT64",
+  "STRING",
+  "BOOL",
+  "RUNE",
+  "NIL",
+  "TRUE",
+  "FALSE",
   "FUNC",
   "MAIN",
   "VAR",
-  "CONST",
+  "STRUCT",
   "IF",
   "ELSE",
   "SWITCH",
@@ -101,49 +109,6 @@ public class Terminal {
   "BREAK",
   "CONTINUE",
   "RETURN",
-  "STRUCT",
-  "INTERFACE",
-  "INT",
-  "FLOAT64",
-  "STRING",
-  "BOOL",
-  "RUNE_TYPE",
-  "NIL",
-  "TRUE",
-  "FALSE",
-  "ENTERO",
-  "FLOTANTE",
-  "CADENA",
-  "IDENTIFICADOR",
-  "RUNE_LIT",
-  "MAS",
-  "MENOS",
-  "MULT",
-  "DIV",
-  "MODULO",
-  "NOT",
-  "IGUAL",
-  "NO_IGUAL",
-  "MENOR",
-  "MAYOR",
-  "MENOR_IGUAL",
-  "MAYOR_IGUAL",
-  "AND",
-  "OR",
-  "ASIG",
-  "DECL_ASIG",
-  "PLUS_ASIG",
-  "MINUS_ASIG",
-  "PAR_IZQ",
-  "PAR_DER",
-  "COR_IZQ",
-  "COR_DER",
-  "LLA_IZQ",
-  "LLA_DER",
-  "COMA",
-  "PUNTO_COMA",
-  "DOS_PUNTOS",
-  "PUNTO",
   "APPEND",
   "LEN",
   "FMT",
@@ -156,7 +121,36 @@ public class Terminal {
   "ATOI",
   "PARSEFLOAT",
   "REFLECT",
-  "TYPEOF"
+  "TYPEOF",
+  "PLUS_ASIG",
+  "MINUS_ASIG",
+  "IGUAL",
+  "NO_IGUAL",
+  "MAYOR_IGUAL",
+  "MENOR_IGUAL",
+  "AND",
+  "OR",
+  "DECL_ASIG",
+  "ASIG",
+  "MAS",
+  "MENOS",
+  "MULT",
+  "DIV",
+  "MODULO",
+  "NOT",
+  "MAYOR",
+  "MENOR",
+  "UMENOS",
+  "DOS_PUNTOS",
+  "PUNTO",
+  "COMA",
+  "PUNTO_COMA",
+  "PAR_IZQ",
+  "PAR_DER",
+  "COR_IZQ",
+  "COR_DER",
+  "LLA_IZQ",
+  "LLA_DER"
   };
 }
 
