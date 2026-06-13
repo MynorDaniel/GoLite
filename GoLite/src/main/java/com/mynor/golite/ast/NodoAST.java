@@ -9,11 +9,20 @@ package com.mynor.golite.ast;
  * @author mynordma
  */
 public abstract class NodoAST {
-    public int linea;
-    public int columna;
+
+    private final int linea;
+    private final int columna;
 
     public NodoAST(int linea, int columna) {
         this.linea = linea;
         this.columna = columna;
+    }
+
+    public int getLinea() {
+        return linea;
+    }
+
+    public int getColumna() {
+        return columna;
     }
 }

@@ -101,6 +101,8 @@ RUNE_INCOMPLETO  = '([^\\'\r\n]|\\.)*
 
 "="             { addToken(yyline + 1, yycolumn + 1, yytext(), TipoToken.ASIG); return new Symbol(Terminal.ASIG,       yyline, yycolumn); }
 "+"             { addToken(yyline + 1, yycolumn + 1, yytext(), TipoToken.MAS); return new Symbol(Terminal.MAS,        yyline, yycolumn); }
+"++"            { addToken(yyline + 1, yycolumn + 1, yytext(), TipoToken.INCREMENTO); return new Symbol(Terminal.INCREMENTO, yyline, yycolumn); }
+"--"            { addToken(yyline + 1, yycolumn + 1, yytext(), TipoToken.DECREMENTO); return new Symbol(Terminal.DECREMENTO, yyline, yycolumn); }
 "-"             { addToken(yyline + 1, yycolumn + 1, yytext(), TipoToken.MENOS); return new Symbol(Terminal.MENOS,      yyline, yycolumn); }
 "*"             { addToken(yyline + 1, yycolumn + 1, yytext(), TipoToken.MULT); return new Symbol(Terminal.MULT,       yyline, yycolumn); }
 "/"             { addToken(yyline + 1, yycolumn + 1, yytext(), TipoToken.DIV); return new Symbol(Terminal.DIV,        yyline, yycolumn); }

@@ -15,6 +15,9 @@ public enum TipoToken {
     FLOTANTE,
     IDENTIFICADOR,
     
+    INCREMENTO,
+    DECREMENTO,
+    
     INT,
     FLOAT64,
     STRING,

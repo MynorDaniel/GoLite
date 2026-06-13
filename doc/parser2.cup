@@ -10,6 +10,19 @@ parser code {:
     private final List<String> erroresSintacticos = new ArrayList<>();
     public Symbol ultimoError = null;
 
+    public boolean tieneMain = false;
+    public StringBuilder reportePrint = new StringBuilder();
+
+    public void registrarErrorSemantico(String mensaje, int linea, int col) {
+        reportePrint.append("Error Semántico [Línea: ").append(linea)
+                    .append(", Columna: ").append(col).append("]: ")
+                    .append(mensaje).append("\n");
+    }
+
+    public void registrarInfo(String mensaje) {
+        reportePrint.append(mensaje).append("\n");
+    }
+
     public List<String> getErroresSintacticos() {
         return erroresSintacticos;
     }
@@ -110,44 +123,41 @@ terminal LLA_IZQ, LLA_DER;
 
 non terminal NodoPrograma programa;
 non terminal List<NodoDeclaracionGlobal>   lista_globales;
-non terminal NodoDeclaracionGlobal         declaracion_global;
-non terminal NodoTipo                      tipo;
-non terminal NodoTipoSlice                 tipo_slice;
-non terminal NodoDeclVar                   declaracion_variable;
-non terminal NodoAsignVar                  asignacion_variable;
-non terminal NodoDefStruct                 def_struct;
+non terminal NodoDeclaracionGlobal        declaracion_global;
+non terminal NodoTipo                     tipo;
+non terminal NodoTipoSlice                tipo_slice;
+non terminal NodoDeclVar                  declaracion_variable;
+non terminal NodoAsignVar                 asignacion_variable;
+non terminal NodoDefStruct                def_struct;
 non terminal List<NodoAtributoStruct>      lista_atributos_struct;
 non terminal NodoAtributoStruct            atributo_struct;
-non terminal NodoInstanciaStruct           instancia_struct;
+non terminal NodoInstanciaStruct          instancia_struct;
 non terminal List<NodoCampoStruct>         lista_campos_struct;
-non terminal NodoCampoStruct               campo_struct;
-non terminal NodoDefFuncion                def_funcion;
-non terminal List<NodoParametro>           lista_parametros;
-non terminal List<NodoParametro>           lista_parametros_no_vacia; 
-non terminal NodoParametro                 parametro;
-non terminal NodoBloque                    bloque;
+non terminal NodoCampoStruct              campo_struct;
+non terminal NodoDefFuncion               def_funcion;
+non terminal NodoBloque                   bloque;
 non terminal List<NodoInstruccion>         instrucciones;
 non terminal NodoInstruccion               instruccion;
-non terminal NodoIf                        sent_if;
-non terminal NodoSwitch                    sent_switch;
+non terminal NodoIf                       sent_if;
+non terminal NodoSwitch                   sent_switch;
 non terminal List<NodoCaso>                lista_cases;
-non terminal NodoCaso                      caso;
+non terminal NodoCaso                     caso;
 non terminal NodoCasoDefault              caso_default;
-non terminal NodoFor                       sent_for;
+non terminal NodoFor                      sent_for;
 non terminal NodoInstruccion               sent_for_init;
 non terminal NodoInstruccion               sent_for_post;
-non terminal NodoBreak                     sent_break;
-non terminal NodoContinue                  sent_continue;
-non terminal NodoReturn                    sent_return;
-non terminal NodoExpresion            llamada_funcion;
+non terminal NodoBreak                    sent_break;
+non terminal NodoContinue                 sent_continue;
+non terminal NodoReturn                   sent_return;
+non terminal NodoExpresion                 llamada_funcion;
 non terminal List<NodoExpresion>           lista_argumentos;
-non terminal NodoAtoi                      expr_atoi;
-non terminal NodoParsefloat                expr_parsefloat;
-non terminal NodoTypeof                    expr_typeof;
+non terminal NodoAtoi                     expr_atoi;
+non terminal NodoParsefloat               expr_parsefloat;
+non terminal NodoTypeof                   expr_typeof;
 non terminal NodoSlicesIndex              expr_slices_index;
 non terminal NodoStringsJoin              expr_strings_join;
-non terminal NodoLen                       expr_len;
-non terminal NodoAppend                    expr_append;
+non terminal NodoLen                      expr_len;
+non terminal NodoAppend                   expr_append;
 non terminal NodoExpresion                 expresion;
 non terminal NodoExpresion                 operando;
 non terminal NodoLiteralSlice              literal_slice;
@@ -166,20 +176,37 @@ precedence left COR_IZQ, PAR_IZQ, LLA_IZQ, PUNTO;
 
 start with programa;
 
+
 programa ::=
       lista_globales:l
-      {: RESULT = new NodoPrograma(l, lleft, lright); :}
+      {: 
+
+          if (!parser.tieneMain) {
+              parser.registrarErrorSemantico("No se encontró la definición de la función 'main'. El programa no puede ejecutarse.", 0, 0);
+          } else {
+              parser.registrarInfo("Análisis Sintáctico Exitoso: Función 'main' detectada correctamente.");
+          }
+          RESULT = new NodoPrograma(l, lleft, lright); 
+      :}
     ;
 
 lista_globales ::=
       lista_globales:l declaracion_global:d
       {: l.add(d); RESULT = l; :}
     | /* vacío */
-      {: RESULT = new ArrayList<>(); :}
+      {: RESULT = new ArrayList<NodoDeclaracionGlobal>(); :}
     ;
 
 declaracion_global ::=
-      def_funcion:f     {: RESULT = f; :}
+      def_funcion:f     
+      {: 
+
+          if (f != null && f.getNombre().equals("main")) {
+              parser.tieneMain = true;
+              parser.registrarInfo("Función principal 'main' registrada en el ámbito global.");
+          }
+          RESULT = f; 
+      :}
     | def_struct:s      {: RESULT = s; :}
     | declaracion_variable:v {: RESULT = v; :}
     | asignacion_variable:a  {: RESULT = a; :}
@@ -243,7 +270,7 @@ def_struct ::=
       STRUCT IDENTIFICADOR:id LLA_IZQ lista_atributos_struct:attrs LLA_DER
       {: RESULT = new NodoDefStruct(id, attrs, idleft, idright); :}
     | STRUCT IDENTIFICADOR:id LLA_IZQ error:e LLA_DER
-      {: RESULT = new NodoDefStruct(id, new ArrayList<>(), idleft, idright);
+      {: RESULT = new NodoDefStruct(id, new ArrayList<NodoAtributoStruct>(), idleft, idright);
          parser.report_error("Error en definición de struct " + id, null); :}
     | STRUCT:s error LLA_IZQ lista_atributos_struct:attrs LLA_DER
       {: RESULT = new NodoDefStruct("?", attrs, sleft, sright);
@@ -254,9 +281,9 @@ lista_atributos_struct ::=
       lista_atributos_struct:l atributo_struct:a
       {: l.add(a); RESULT = l; :}
     | atributo_struct:a
-      {: List<NodoAtributoStruct> l = new ArrayList<>(); l.add(a); RESULT = l; :}
+      {: List<NodoAtributoStruct> l = new ArrayList<NodoAtributoStruct>(); l.add(a); RESULT = l; :}
     | error:e PUNTO_COMA
-      {: RESULT = new ArrayList<>();
+      {: RESULT = new ArrayList<NodoAtributoStruct>();
          parser.report_error("Atributo de struct inválido", null); :}
     ;
 
@@ -271,14 +298,14 @@ instancia_struct ::=
       IDENTIFICADOR:id LLA_IZQ lista_campos_struct:campos LLA_DER
       {: RESULT = new NodoInstanciaStruct(id, campos, idleft, idright); :}
     | IDENTIFICADOR:id LLA_IZQ LLA_DER
-      {: RESULT = new NodoInstanciaStruct(id, new ArrayList<>(), idleft, idright); :}
+      {: RESULT = new NodoInstanciaStruct(id, new ArrayList<NodoCampoStruct>(), idleft, idright); :}
     ;
 
 lista_campos_struct ::=
       lista_campos_struct:l COMA campo_struct:c
       {: l.add(c); RESULT = l; :}
     | campo_struct:c
-      {: List<NodoCampoStruct> l = new ArrayList<>(); l.add(c); RESULT = l; :}
+      {: List<NodoCampoStruct> l = new ArrayList<NodoCampoStruct>(); l.add(c); RESULT = l; :}
     ;
 
 campo_struct ::=
@@ -291,46 +318,10 @@ campo_struct ::=
 
 def_funcion ::=
       FUNC:f MAIN PAR_IZQ PAR_DER bloque:b
-      {: RESULT = new NodoDefFuncion("main", new ArrayList<>(), null, null, true, b, fleft, fright); :}
-    | FUNC:f IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER bloque:b
-      {: RESULT = new NodoDefFuncion(id, ps, null, null, false, b, fleft, fright); :}
-    | FUNC:f IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER tipo:t bloque:b
-      {: RESULT = new NodoDefFuncion(id, ps, t, null, false, b, fleft, fright); :}
-    | FUNC:f IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER tipo_slice:ts bloque:b
-      {: RESULT = new NodoDefFuncion(id, ps, null, ts, false, b, fleft, fright); :}
-    | FUNC:f PAR_IZQ IDENTIFICADOR:ref IDENTIFICADOR:struct PAR_DER IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER bloque:b
-      {: RESULT = new NodoDefFuncionStruct(struct, ref, id, ps, null, null, b, fleft, fright); :}
-    | FUNC:f PAR_IZQ IDENTIFICADOR:ref IDENTIFICADOR:struct PAR_DER IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER tipo:t bloque:b
-      {: RESULT = new NodoDefFuncionStruct(struct, ref, id, ps, t, null, b, fleft, fright); :}
-    | FUNC:f PAR_IZQ IDENTIFICADOR:ref IDENTIFICADOR:struct PAR_DER IDENTIFICADOR:id PAR_IZQ lista_parametros:ps PAR_DER tipo_slice:ts bloque:b
-      {: RESULT = new NodoDefFuncionStruct(struct, ref, id, ps, null, ts, b, fleft, fright); :}
-    | FUNC:f IDENTIFICADOR:id PAR_IZQ error PAR_DER bloque:b
-      {: RESULT = new NodoDefFuncion(id, new ArrayList<>(), null, null, false, b, fleft, fright);
-         parser.report_error("Parámetros inválidos en función " + id, null); :}
+      {: RESULT = new NodoDefFuncion("main", new ArrayList<NodoParametro>(), null, null, true, b, fleft, fright); :}
     | FUNC:f error bloque:b
-      {: RESULT = new NodoDefFuncion("?", new ArrayList<>(), null, null, false, b, fleft, fright);
-         parser.report_error("Declaración de función malformada", null); :}
-    ;
-
-lista_parametros ::=
-      lista_parametros_no_vacia:l
-      {: RESULT = l; :}
-    | /* vacío */
-      {: RESULT = new ArrayList<>(); :}
-    ;
-
-lista_parametros_no_vacia ::=
-      lista_parametros_no_vacia:l COMA parametro:p
-      {: l.add(p); RESULT = l; :}
-    | parametro:p
-      {: List<NodoParametro> l = new ArrayList<>(); l.add(p); RESULT = l; :}
-    ;
-
-parametro ::=
-      IDENTIFICADOR:id tipo:t
-      {: RESULT = new NodoParametro(id, t, null, idleft, idright); :}
-    | IDENTIFICADOR:id tipo_slice:ts
-      {: RESULT = new NodoParametro(id, null, ts, idleft, idright); :}
+      {: RESULT = new NodoDefFuncion("?", new ArrayList<NodoParametro>(), null, null, false, b, fleft, fright);
+         parser.report_error("La estructura de la función principal es inválida. Debe ser 'func main()'", null); :}
     ;
 
 instrucciones ::=
@@ -339,7 +330,7 @@ instrucciones ::=
     | instrucciones:l PUNTO_COMA
       {: RESULT = l; :}
     | /* vacío */
-      {: RESULT = new ArrayList<>(); :}
+      {: RESULT = new ArrayList<NodoInstruccion>(); :}
     ;
 
 instruccion ::=
@@ -395,7 +386,7 @@ lista_cases ::=
       lista_cases:l caso:c
       {: l.add(c); RESULT = l; :}
     |
-      {: RESULT = new ArrayList<>(); :}
+      {: RESULT = new ArrayList<NodoCaso>(); :}
     ;
 
 caso ::=
@@ -458,7 +449,7 @@ llamada_funcion ::=
     | FMT:f PUNTO PRINTLN PAR_IZQ lista_argumentos:args PAR_DER
       {: RESULT = new NodoPrintln(args, fleft, fright); :}
     | IDENTIFICADOR:id PAR_IZQ error PAR_DER
-      {: RESULT = new NodoLlamadaFuncion(id, new ArrayList<>(), idleft, idright);
+      {: RESULT = new NodoLlamadaFuncion(id, new ArrayList<NodoExpresion>(), idleft, idright);
          parser.report_error("Argumentos inválidos en llamada", null); :}
     ;
 
@@ -466,9 +457,9 @@ lista_argumentos ::=
       lista_argumentos:l COMA expresion:e
       {: l.add(e); RESULT = l; :}
     | expresion:e
-      {: List<NodoExpresion> l = new ArrayList<>(); l.add(e); RESULT = l; :}
+      {: List<NodoExpresion> l = new ArrayList<NodoExpresion>(); l.add(e); RESULT = l; :}
     |
-      {: RESULT = new ArrayList<>(); :}
+      {: RESULT = new ArrayList<NodoExpresion>(); :}
     ;
 
 expr_atoi ::=
@@ -604,13 +595,13 @@ literal_slice ::=
       COR_IZQ:c COR_DER tipo:t LLA_IZQ lista_expresiones:es LLA_DER
       {: RESULT = new NodoLiteralSlice(t, null, es, 1, cleft, cright); :}
     | COR_IZQ:c COR_DER tipo:t LLA_IZQ LLA_DER
-      {: RESULT = new NodoLiteralSlice(t, null, new ArrayList<>(), 1, cleft, cright); :}
+      {: RESULT = new NodoLiteralSlice(t, null, new ArrayList<NodoExpresion>(), 1, cleft, cright); :}
     | COR_IZQ:c COR_DER COR_IZQ COR_DER tipo:t LLA_IZQ lista_filas_slice:fs LLA_DER
       {: RESULT = new NodoLiteralSlice(t, fs, null, 2, cleft, cright); :}
     | COR_IZQ:c COR_DER COR_IZQ COR_DER tipo:t LLA_IZQ LLA_DER
-      {: RESULT = new NodoLiteralSlice(t, new ArrayList<>(), null, 2, cleft, cright); :}
+      {: RESULT = new NodoLiteralSlice(t, new ArrayList<NodoLiteralSlice>(), null, 2, cleft, cright); :}
     | COR_IZQ:c COR_DER tipo:t LLA_IZQ error LLA_DER
-      {: RESULT = new NodoLiteralSlice(t, null, new ArrayList<>(), 1, cleft, cright);
+      {: RESULT = new NodoLiteralSlice(t, null, new ArrayList<NodoExpresion>(), 1, cleft, cright);
          parser.report_error("Contenido de slice inválido", null); :}
     ;
 
@@ -618,14 +609,14 @@ lista_filas_slice ::=
       lista_filas_slice:l COMA fila_slice:f
       {: l.add(f); RESULT = l; :}
     | fila_slice:f
-      {: List<NodoLiteralSlice> l = new ArrayList<>(); l.add(f); RESULT = l; :}
+      {: List<NodoLiteralSlice> l = new ArrayList<NodoLiteralSlice>(); l.add(f); RESULT = l; :}
     ;
 
 fila_slice ::=
       LLA_IZQ:l lista_expresiones:es LLA_DER
       {: RESULT = new NodoLiteralSlice(null, null, es, 1, lleft, lright); :}
     | LLA_IZQ:l error LLA_DER
-      {: RESULT = new NodoLiteralSlice(null, null, new ArrayList<>(), 1, lleft, lright);
+      {: RESULT = new NodoLiteralSlice(null, null, new ArrayList<NodoExpresion>(), 1, lleft, lright);
          parser.report_error("Fila de slice inválida", null); :}
     ;
 
@@ -633,5 +624,5 @@ lista_expresiones ::=
       lista_expresiones:l COMA expresion:e
       {: l.add(e); RESULT = l; :}
     | expresion:e
-      {: List<NodoExpresion> l = new ArrayList<>(); l.add(e); RESULT = l; :}
+      {: List<NodoExpresion> l = new ArrayList<NodoExpresion>(); l.add(e); RESULT = l; :}
     ;

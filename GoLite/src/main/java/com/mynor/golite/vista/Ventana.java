@@ -4,12 +4,22 @@
  */
 package com.mynor.golite.vista;
 
+import com.mynor.golite.ast.NodoPrograma;
+import com.mynor.golite.interprete.Interprete;
+import com.mynor.golite.lexer.LexerGLT;
+import com.mynor.golite.lexer.TipoToken;
+import com.mynor.golite.lexer.Token;
+import com.mynor.golite.parser.ParserGLT;
 import java.awt.Color;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java_cup.runtime.Symbol;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.text.BadLocationException;
 
 /**
@@ -22,6 +32,9 @@ public class Ventana extends javax.swing.JFrame {
     private String rutaAbsolutaActual = "";
     private boolean cambiosSinGuardar = false;
     private boolean hayErrores = false;
+
+    private ArrayList<Token> tokens = new ArrayList<>();
+    private ArrayList<String[]> errores = new ArrayList<>(); // tipo, error
 
     public Ventana() {
         initComponents();
@@ -373,15 +386,130 @@ public class Ventana extends javax.swing.JFrame {
     }//GEN-LAST:event_inputTextAreaMouseClicked
 
     private void execBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_execBtnActionPerformed
-        // TODO add your handling code here:
+        // Ejecutar analisis
+
+        String entrada = inputTextArea.getText();
+        StringReader reader = new StringReader(entrada);
+
+        LexerGLT lexer = null;
+
+        try {
+
+            lexer = new LexerGLT(reader);
+            ParserGLT p = new ParserGLT(lexer);
+
+            Symbol result = p.parse();
+
+            NodoPrograma ast = (NodoPrograma) result.value;
+
+            ArrayList<Token> tokensLexer = lexer.getTokens();
+            List<String> erroresSintacticos = p.getErroresSintacticos();
+            ArrayList<Token> erroresLexicos = new ArrayList<>();
+
+            tokens.forEach(t -> {
+                if (t.getTipo() == TipoToken.ERROR) {
+                    erroresLexicos.add(t);
+                }
+            });
+
+            tokens = tokensLexer;
+
+            if (ast != null && erroresLexicos.isEmpty() && erroresSintacticos.isEmpty()) {
+                analizarSemantica(ast);
+            }
+
+            cargarErrores(erroresLexicos, erroresSintacticos);
+
+            for (String[] err : errores) {
+                log(err[0] + " - " + err[1]);
+            }
+
+            Interprete interprete = new Interprete();
+            interprete.visit(ast);
+            log(interprete.getConsola());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
     }//GEN-LAST:event_execBtnActionPerformed
 
+    private void log(String s) {
+        outputTextArea.append("\n");
+        outputTextArea.append(s);
+    }
+
+    private void cargarErrores(ArrayList<Token> erroresLexicos, List<String> erroresSintacticos) {
+        errores.clear();
+        for (Token e : erroresLexicos) {
+            errores.add(new String[]{"Léxico", "Token " + e.getLexema() + " inesperado - ", String.valueOf(e.getLinea()) + "|" + String.valueOf(e.getColumna())});
+        }
+        for (String e : erroresSintacticos) {
+            errores.add(new String[]{"Sintáctico", e});
+        }
+    }
+
     private void tknsItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tknsItemActionPerformed
-        // TODO add your handling code here:
+        String[] columnas = {"Tipo de Token", "Lexema", "Línea", "Columna"};
+
+        DefaultTableModel modelo = new DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        for (Token t : tokens) {
+            Object[] fila = {
+                t.getTipo(),
+                t.getLexema(),
+                t.getLinea(),
+                t.getColumna()
+            };
+            modelo.addRow(fila);
+        }
+
+        JTable tablaTokens = new JTable(modelo);
+        tablaTokens.setFillsViewportHeight(true);
+
+        JScrollPane scrollPane = new JScrollPane(tablaTokens);
+
+        javax.swing.JDialog ventanaTokens = new javax.swing.JDialog(this, "Tabla de Tokens (Análisis Léxico)", true);
+        ventanaTokens.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        ventanaTokens.setSize(600, 400); 
+        ventanaTokens.setLocationRelativeTo(this);
+
+        ventanaTokens.add(scrollPane);
+        ventanaTokens.setVisible(true);
     }//GEN-LAST:event_tknsItemActionPerformed
 
     private void errItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_errItemActionPerformed
-        // TODO add your handling code here:
+        String[] columnas = {"Tipo de Error", "Descripción"};
+
+        DefaultTableModel modelo = new DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        for (String[] err : errores) {
+            modelo.addRow(err);
+        }
+
+        JTable tablaErrores = new JTable(modelo);
+        tablaErrores.setFillsViewportHeight(true);
+
+        JScrollPane scrollPane = new JScrollPane(tablaErrores);
+
+        javax.swing.JDialog ventanaErrores = new javax.swing.JDialog(this, "Lista de Errores Semánticos", true);
+        ventanaErrores.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        ventanaErrores.setSize(600, 300); // Ancho y alto de la ventana
+        ventanaErrores.setLocationRelativeTo(this); // Centrar la ventana respecto a la principal
+
+        ventanaErrores.add(scrollPane);
+        ventanaErrores.setVisible(true);
     }//GEN-LAST:event_errItemActionPerformed
 
     private void astItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_astItemActionPerformed
@@ -429,5 +557,9 @@ public class Ventana extends javax.swing.JFrame {
     private javax.swing.JMenuItem symItem;
     private javax.swing.JMenuItem tknsItem;
     // End of variables declaration//GEN-END:variables
+
+    private void analizarSemantica(NodoPrograma ast) {
+
+    }
 
 }
