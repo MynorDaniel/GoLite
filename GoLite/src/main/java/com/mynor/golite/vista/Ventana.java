@@ -403,7 +403,7 @@ public class Ventana extends javax.swing.JFrame {
             NodoPrograma ast = (NodoPrograma) result.value;
 
             ArrayList<Token> tokensLexer = lexer.getTokens();
-            List<String> erroresSintacticos = p.getErroresSintacticos();
+            //List<String> erroresSintacticos = p.getErroresSintacticos();
             ArrayList<Token> erroresLexicos = new ArrayList<>();
 
             tokens.forEach(t -> {
@@ -414,11 +414,11 @@ public class Ventana extends javax.swing.JFrame {
 
             tokens = tokensLexer;
 
-            if (ast != null && erroresLexicos.isEmpty() && erroresSintacticos.isEmpty()) {
-                analizarSemantica(ast);
-            }
+            //if (ast != null && erroresLexicos.isEmpty() && erroresSintacticos.isEmpty()) {
+              //  analizarSemantica(ast);
+            //}
 
-            cargarErrores(erroresLexicos, erroresSintacticos);
+            //cargarErrores(erroresLexicos, erroresSintacticos);
 
             for (String[] err : errores) {
                 log(err[0] + " - " + err[1]);

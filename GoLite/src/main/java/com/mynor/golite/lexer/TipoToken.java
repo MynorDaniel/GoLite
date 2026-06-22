@@ -23,6 +23,7 @@ public enum TipoToken {
     STRING,
     BOOL,
     NIL,
+    RUNE,   
     
     TRUE,
     FALSE,
