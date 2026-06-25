@@ -5,7 +5,7 @@
 package com.mynor.golite.vista;
 
 import com.mynor.golite.ast.NodoPrograma;
-import com.mynor.golite.interprete.Interprete;
+import com.mynor.golite.interprete.Ejecutor;
 import com.mynor.golite.lexer.LexerGLT;
 import com.mynor.golite.lexer.TipoToken;
 import com.mynor.golite.lexer.Token;
@@ -424,9 +424,9 @@ public class Ventana extends javax.swing.JFrame {
                 log(err[0] + " - " + err[1]);
             }
 
-            Interprete interprete = new Interprete();
+            Ejecutor interprete = new Ejecutor();
             interprete.visit(ast);
-            log(interprete.getConsola());
+            //log(interprete.getConsola());
 
         } catch (Exception e) {
             e.printStackTrace();

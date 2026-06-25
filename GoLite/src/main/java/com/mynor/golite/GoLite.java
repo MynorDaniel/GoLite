@@ -4,6 +4,8 @@
 package com.mynor.golite;
 
 import com.mynor.golite.ast.*;
+import com.mynor.golite.ast.analizadorsemantico.AnalizadorSemantico;
+import com.mynor.golite.interprete.Ejecutor;
 import com.mynor.golite.lexer.LexerGLT;
 import com.mynor.golite.lexer.TipoToken;
 import com.mynor.golite.lexer.Token;
@@ -40,7 +42,7 @@ public class GoLite {
     static void test() throws IOException, Exception {
         out = new PrintWriter(new FileWriter("/home/mynordma/testcompi/testx/salida.txt"));
 
-        FileReader reader = new FileReader(new File("/home/mynordma/testcompi/testx/test.glt"));
+        FileReader reader = new FileReader(new File("/home/mynordma/testcompi/testx/testsemantica.glt"));
         LexerGLT lexer = new LexerGLT(reader);
 
         ParserGLT parser = new ParserGLT(lexer);
@@ -50,8 +52,23 @@ public class GoLite {
         NodoPrograma ast = (NodoPrograma) result.value;
         
         imprimirErrores(parser.getErroresSintacticos());
+        
+        AnalizadorSemantico analizadorSemantico = new AnalizadorSemantico();
+        try {
+            analizadorSemantico.visit(ast);
+        } catch (Exception e) {
+            System.out.println("Error en el analizador semantico");
+        }
+        
+        
+        imprimirErroresSemanticos(analizadorSemantico.getErrores());
+        //imprimirTokens(lexer.getTokens());
 
         imprimirAST(ast, 0);
+        
+        Ejecutor ejecutor = new Ejecutor();
+        //ejecutor.visit(ast);
+        
         out.flush();
 
     }
@@ -114,6 +131,12 @@ public class GoLite {
     private static void imprimirErrores(List<String[]> erroresSintacticos) {
         erroresSintacticos.forEach(e -> {
             System.out.println("Error sintactico: " + e[0] + " | " + e[1] + " |" + e[2]);
+        });
+    }
+    
+    private static void imprimirErroresSemanticos(List<String[]> err) {
+        err.forEach(e -> {
+            System.out.println("Error semantico: " + e[0] + " | " + (Integer.parseInt(e[1]) + 1) + " |" + (Integer.parseInt(e[2]) + 1));
         });
     }
 }

@@ -14,6 +14,7 @@ import java.util.List;
 public class NodoDefStruct extends NodoDeclaracionGlobal {
 
     private final String nombreStruct;
+    private final List<NodoAtributoStruct> atributos;
 
     public String getNombreStruct() {
         return nombreStruct;
@@ -22,14 +23,13 @@ public class NodoDefStruct extends NodoDeclaracionGlobal {
     public List<NodoAtributoStruct> getAtributos() {
         return atributos;
     }
-    private final List<NodoAtributoStruct> atributos;
 
     public NodoDefStruct(String nombre, List<NodoAtributoStruct> attrs, int linea, int columna) {
         super(linea, columna);
         this.nombreStruct = nombre;
         this.atributos = attrs;
     }
-    
+
     public <T> T accept(Visitor<T> v) {
         return v.visit(this);
     }

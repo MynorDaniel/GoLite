@@ -29,6 +29,7 @@ public class NodoAccesoCampo extends NodoExpresion {
         return campo;
     }
 
+    @Override
     public <T> T accept(Visitor<T> v) {
         return v.visit(this);
     }

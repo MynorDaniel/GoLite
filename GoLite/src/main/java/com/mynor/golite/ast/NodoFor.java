@@ -19,8 +19,9 @@ public class NodoFor extends NodoInstruccion {
     private final String rangeVal;
     private final NodoBloque bloque;
     private final boolean esRange;
+    private final NodoExpresion iterable;
 
-    public NodoFor(NodoInstruccion init, NodoExpresion cond, NodoInstruccion post, String idx, String val, NodoBloque b, boolean esRange, int linea, int columna) {
+    public NodoFor(NodoInstruccion init, NodoExpresion cond, NodoInstruccion post, String idx, String val, NodoBloque b, NodoExpresion iterable, boolean esRange, int linea, int columna) {
         super(linea, columna);
         this.init = init;
         this.condicion = cond;
@@ -29,6 +30,7 @@ public class NodoFor extends NodoInstruccion {
         this.rangeVal = val;
         this.bloque = b;
         this.esRange = esRange;
+        this.iterable = iterable;
     }
 
     public NodoInstruccion getInit() {
@@ -58,7 +60,12 @@ public class NodoFor extends NodoInstruccion {
     public boolean isEsRange() {
         return esRange;
     }
+
+    public NodoExpresion getIterable() {
+        return iterable;
+    }
     
+    @Override
     public <T> T accept(Visitor<T> v) {
         return v.visit(this);
     }

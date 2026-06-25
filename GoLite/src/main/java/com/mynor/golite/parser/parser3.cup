@@ -194,6 +194,7 @@ declaracion_global ::=
     | def_struct:s         {: RESULT = s; :}
     | declaracion_variable:v {: RESULT = v; :}
     | asignacion_variable:a  {: RESULT = a; :}
+    | instancia_struct:s   {: RESULT = s; :}
     ;
 
 declaracion_variable ::=
@@ -283,10 +284,10 @@ atributo_struct ::=
     ;
 
 instancia_struct ::=
-      IDENTIFICADOR:id LLA_IZQ lista_campos_struct:campos LLA_DER
-      {: RESULT = new NodoInstanciaStruct(id, campos, idleft, idright); :}
-    | IDENTIFICADOR:id LLA_IZQ LLA_DER
-      {: RESULT = new NodoInstanciaStruct(id, new ArrayList<>(), idleft, idright); :}
+      IDENTIFICADOR:tipo IDENTIFICADOR:id ASIG LLA_IZQ lista_campos_struct:campos LLA_DER
+      {: RESULT = new NodoInstanciaStruct(id, campos, tipo, idleft, idright); :}
+    | IDENTIFICADOR:tipo IDENTIFICADOR:id ASIG LLA_IZQ LLA_DER
+      {: RESULT = new NodoInstanciaStruct(id, new ArrayList<>(), tipo, idleft, idright); :}
     ;
 
 lista_campos_struct ::=
@@ -357,6 +358,7 @@ instruccion ::=
     | sent_continue:s         {: RESULT = s; :}
     | sent_return:s           {: RESULT = s; :}
     | llamada_funcion:c       {: RESULT = c; :}
+    | instancia_struct:s   {: RESULT = s; :}
     ;
 
 
@@ -401,11 +403,18 @@ caso_default ::=
 
 sent_for ::=
       FOR:f expresion:cond bloque:b
-      {: RESULT = new NodoFor(null, cond, null, null, null, b, false, fleft, fright); :}
+      {: RESULT = new NodoFor(null, cond, null, null, null, b, null, false, fleft, fright); :}
     | FOR:f sent_for_init:init PUNTO_COMA expresion:cond PUNTO_COMA sent_for_post:post bloque:b
-      {: RESULT = new NodoFor(init, cond, post, null, null, b, false, fleft, fright); :}
+      {: RESULT = new NodoFor(init, cond, post, null, null, b, null, false, fleft, fright); :}
     | FOR:f IDENTIFICADOR:idx COMA IDENTIFICADOR:val DECL_ASIG RANGE expresion:e bloque:b
-      {: RESULT = new NodoFor(null, null, null, idx, val, b, true, fleft, fright); :}
+      {: RESULT = new NodoFor(null, null, null, idx, val, b, e, true, fleft, fright); :}
+
+    | FOR:f PAR_IZQ expresion:cond PAR_DER bloque:b
+      {: RESULT = new NodoFor(null, cond, null, null, null, b, null, false, fleft, fright); :}
+    | FOR:f PAR_IZQ sent_for_init:init PUNTO_COMA expresion:cond PUNTO_COMA sent_for_post:post PAR_DER bloque:b
+      {: RESULT = new NodoFor(init, cond, post, null, null, b, null, false, fleft, fright); :}
+    | FOR:f PAR_IZQ IDENTIFICADOR:idx COMA IDENTIFICADOR:val DECL_ASIG RANGE expresion:e PAR_DER bloque:b
+      {: RESULT = new NodoFor(null, null, null, idx, val, b, e, true, fleft, fright); :}
     ;
 
 sent_for_init ::=
@@ -432,7 +441,7 @@ sent_return ::=
       {: RESULT = new NodoReturn(e, rleft, rright); :}
     | RETURN:r
       {: RESULT = new NodoReturn(null, rleft, rright); :}
-      %prec NOT
+      //%prec NOT
     ;
 
 llamada_funcion ::=
@@ -505,8 +514,7 @@ expresion ::=
     | MENOS:m expresion:e                  {: RESULT = new NodoUnaria("-", e, mleft, mright); :} %prec UMENOS
     | NOT:n expresion:e                    {: RESULT = new NodoUnaria("!", e, nleft, nright); :}
     | operando:o                           {: RESULT = o; :}
-    | IDENTIFICADOR:paquete PUNTO IDENTIFICADOR:id
-      {: RESULT = new NodoAccesoCampo(paquete, id, paqueteleft, paqueteright); :}
+    
     ;
 
 operando ::=
@@ -533,8 +541,10 @@ operando ::=
     | expr_strings_join:e  {: RESULT = e; :}
     | expr_len:e           {: RESULT = e; :}
     | expr_append:e        {: RESULT = e; :}
-    | instancia_struct:s   {: RESULT = s; :}
     | literal_slice:s      {: RESULT = s; :}
+    | IDENTIFICADOR:paquete PUNTO IDENTIFICADOR:id
+      {: RESULT = new NodoAccesoCampo(paquete, id, paqueteleft, idright); :}
+    
     ;
 
 literal_slice ::=

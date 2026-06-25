@@ -16,6 +16,7 @@ public class NodoBreak extends NodoInstruccion {
         super(linea, columna);
     }
     
+    @Override
     public <T> T accept(Visitor<T> v) {
         return v.visit(this);
     }

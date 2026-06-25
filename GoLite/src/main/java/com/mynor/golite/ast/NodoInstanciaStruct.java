@@ -11,15 +11,17 @@ import java.util.List;
  *
  * @author mynordma
  */
-public class NodoInstanciaStruct extends NodoExpresion {
+public class NodoInstanciaStruct extends NodoDeclaracionGlobal {
 
+    private final String tipo;
     private final String nombreStruct;
     private final List<NodoCampoStruct> campos;
 
-    public NodoInstanciaStruct(String nombre, List<NodoCampoStruct> campos, int linea, int columna) {
+    public NodoInstanciaStruct(String nombre, List<NodoCampoStruct> campos, String tipo, int linea, int columna) {
         super(linea, columna);
         this.nombreStruct = nombre;
         this.campos = campos;
+        this.tipo = tipo;
     }
 
     public String getNombreStruct() {
@@ -29,7 +31,12 @@ public class NodoInstanciaStruct extends NodoExpresion {
     public List<NodoCampoStruct> getCampos() {
         return campos;
     }
+
+    public String getTipo() {
+        return tipo;
+    }
     
+    @Override
     public <T> T accept(Visitor<T> v) {
         return v.visit(this);
     }

@@ -26,7 +26,7 @@ public class NodoCaso extends NodoAST {
         return expresion;
     }
 
-    public List getInstrucciones() {
+    public List<NodoInstruccion> getInstrucciones() {
         return instrucciones;
     }
     
