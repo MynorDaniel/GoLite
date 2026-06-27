@@ -11,6 +11,8 @@ import com.mynor.golite.lexer.TipoToken;
 import com.mynor.golite.lexer.Token;
 import com.mynor.golite.parser.ParserGLT;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,11 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.BadLocationException;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rtextarea.Gutter;
+import org.fife.ui.rtextarea.LineNumberList;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 /**
  *
@@ -33,17 +40,45 @@ public class Ventana extends javax.swing.JFrame {
     private boolean cambiosSinGuardar = false;
     private boolean hayErrores = false;
 
+    RSyntaxTextArea editor = new RSyntaxTextArea(800, 600);
+
     private ArrayList<Token> tokens = new ArrayList<>();
     private ArrayList<String[]> errores = new ArrayList<>(); // tipo, error
 
     public Ventana() {
         initComponents();
+
+        editorScrollPane.setViewportView(editor);
+
+        editor.setCodeFoldingEnabled(true);
+        editor.setAntiAliasingEnabled(true);
+        editor.setTabSize(4);
+        editor.setSyntaxEditingStyle(
+                SyntaxConstants.SYNTAX_STYLE_GO
+        );
+
+        editorScrollPane.setRowHeaderView(
+                new org.fife.ui.rtextarea.LineNumberList(editor)
+        );
+
+        editor.setHighlightCurrentLine(false);
+
         setTitle("Editor - GoLite");
         setLocationRelativeTo(null);
         this.getContentPane().setBackground(new Color(30, 30, 30));
         outputTextArea.setEditable(false);
 
-        inputTextArea.getDocument().addDocumentListener(new DocumentListener() {
+        editor.setBackground(new Color(37, 37, 38));
+        editor.setForeground(new Color(212, 212, 212));
+        editor.setCaretColor(Color.WHITE);
+        editor.setSelectionColor(new Color(38, 79, 120));
+        outputTextArea.setBackground(new Color(37, 37, 38));
+        outputTextArea.setForeground(new Color(212, 212, 212));
+        outputTextArea.setCaretColor(Color.WHITE);
+        outputTextArea.setSelectionColor(new Color(38, 79, 120));
+        outputTextArea.setDragEnabled(true);
+        
+        editor.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 textoModificado();
@@ -60,29 +95,18 @@ public class Ventana extends javax.swing.JFrame {
             }
         });
 
-        inputTextArea.setBackground(new Color(37, 37, 38));
-        inputTextArea.setForeground(new Color(212, 212, 212));
-        inputTextArea.setCaretColor(Color.WHITE);
-        inputTextArea.setSelectionColor(new Color(38, 79, 120));
-
-        outputTextArea.setBackground(new Color(37, 37, 38));
-        outputTextArea.setForeground(new Color(212, 212, 212));
-        outputTextArea.setCaretColor(Color.WHITE);
-        outputTextArea.setSelectionColor(new Color(38, 79, 120));
-
     }
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        inputTextArea = new javax.swing.JTextArea();
         infoLabel = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         outputTextArea = new javax.swing.JTextArea();
         outputLabel = new javax.swing.JLabel();
         execBtn = new javax.swing.JButton();
+        editorScrollPane = new org.fife.ui.rtextarea.RTextScrollPane();
         jMenuBar1 = new javax.swing.JMenuBar();
         abrir = new javax.swing.JMenu();
         guardar = new javax.swing.JMenu();
@@ -97,20 +121,6 @@ public class Ventana extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setForeground(java.awt.Color.black);
 
-        inputTextArea.setBackground(new java.awt.Color(43, 43, 43));
-        inputTextArea.setColumns(20);
-        inputTextArea.setFont(new java.awt.Font("Monospaced", 0, 18)); // NOI18N
-        inputTextArea.setForeground(new java.awt.Color(169, 183, 198));
-        inputTextArea.setLineWrap(true);
-        inputTextArea.setRows(5);
-        inputTextArea.setToolTipText("");
-        inputTextArea.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                inputTextAreaMouseClicked(evt);
-            }
-        });
-        jScrollPane1.setViewportView(inputTextArea);
-
         infoLabel.setBackground(new java.awt.Color(255, 255, 255));
         infoLabel.setForeground(new java.awt.Color(255, 255, 255));
         infoLabel.setText("Ln 1 Col 1");
@@ -120,6 +130,7 @@ public class Ventana extends javax.swing.JFrame {
         outputTextArea.setFont(new java.awt.Font("Monospaced", 0, 15)); // NOI18N
         outputTextArea.setForeground(new java.awt.Color(169, 183, 198));
         outputTextArea.setRows(5);
+        outputTextArea.setDragEnabled(true);
         jScrollPane2.setViewportView(outputTextArea);
 
         outputLabel.setBackground(new java.awt.Color(255, 255, 255));
@@ -226,30 +237,30 @@ public class Ventana extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(outputLabel)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(editorScrollPane)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(infoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 498, Short.MAX_VALUE)
                         .addComponent(execBtn)
-                        .addGap(38, 38, 38)))
+                        .addGap(38, 38, 38))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(outputLabel)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 457, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(editorScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(outputLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 344, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(infoLabel)
@@ -302,7 +313,7 @@ public class Ventana extends javax.swing.JFrame {
                 while ((linea = br.readLine()) != null) {
                     contenido.append(linea).append("\n");
                 }
-                inputTextArea.setText(contenido.toString());
+                editor.setText(contenido.toString());
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(this, "Error al leer el archivo: " + e.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -313,7 +324,7 @@ public class Ventana extends javax.swing.JFrame {
     private void guardarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_guardarMouseClicked
         if (!rutaAbsolutaActual.isEmpty()) {
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(rutaAbsolutaActual))) {
-                writer.write(inputTextArea.getText());
+                writer.write(editor.getText());
                 setTitle("Editor - GoLite - " + rutaActual + " (Guardado)");
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(this, "Error al guardar el archivo: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -343,7 +354,7 @@ public class Ventana extends javax.swing.JFrame {
             }
 
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoSeleccionado))) {
-                writer.write(inputTextArea.getText());
+                writer.write(editor.getText());
                 if (rutaAbsolutaActual.isEmpty()) {
                     rutaAbsolutaActual = archivoSeleccionado.getAbsolutePath();
                     rutaActual = archivoSeleccionado.getPath();
@@ -374,21 +385,17 @@ public class Ventana extends javax.swing.JFrame {
             }
         }
 
-        inputTextArea.setText("");
+        editor.setText("");
         rutaAbsolutaActual = "";
         rutaActual = "";
         setTitle("Editor - GoLite - Nuevo Documento");
         cambiosSinGuardar = false;
     }//GEN-LAST:event_nuevoMouseClicked
 
-    private void inputTextAreaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_inputTextAreaMouseClicked
-        actualizarLabelInfo();
-    }//GEN-LAST:event_inputTextAreaMouseClicked
-
     private void execBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_execBtnActionPerformed
         // Ejecutar analisis
 
-        String entrada = inputTextArea.getText();
+        String entrada = editor.getText();
         StringReader reader = new StringReader(entrada);
 
         LexerGLT lexer = null;
@@ -415,11 +422,9 @@ public class Ventana extends javax.swing.JFrame {
             tokens = tokensLexer;
 
             //if (ast != null && erroresLexicos.isEmpty() && erroresSintacticos.isEmpty()) {
-              //  analizarSemantica(ast);
+            //  analizarSemantica(ast);
             //}
-
             //cargarErrores(erroresLexicos, erroresSintacticos);
-
             for (String[] err : errores) {
                 log(err[0] + " - " + err[1]);
             }
@@ -477,7 +482,7 @@ public class Ventana extends javax.swing.JFrame {
 
         javax.swing.JDialog ventanaTokens = new javax.swing.JDialog(this, "Tabla de Tokens (Análisis Léxico)", true);
         ventanaTokens.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        ventanaTokens.setSize(600, 400); 
+        ventanaTokens.setSize(600, 400);
         ventanaTokens.setLocationRelativeTo(this);
 
         ventanaTokens.add(scrollPane);
@@ -527,10 +532,10 @@ public class Ventana extends javax.swing.JFrame {
     }
 
     private void actualizarLabelInfo() {
-        int caretPosition = inputTextArea.getCaretPosition();
+        int caretPosition = editor.getCaretPosition();
         try {
-            int linea = inputTextArea.getLineOfOffset(caretPosition);
-            int columna = caretPosition - inputTextArea.getLineStartOffset(linea);
+            int linea = editor.getLineOfOffset(caretPosition);
+            int columna = caretPosition - editor.getLineStartOffset(linea);
 
             infoLabel.setText("Ln " + (linea + 1) + " Col " + (columna + 1));
         } catch (BadLocationException e) {
@@ -541,15 +546,14 @@ public class Ventana extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu abrir;
     private javax.swing.JMenuItem astItem;
+    private javax.swing.JScrollPane editorScrollPane;
     private javax.swing.JMenuItem errItem;
     private javax.swing.JButton execBtn;
     private javax.swing.JMenu guardar;
     private javax.swing.JMenu guardarComo;
     private javax.swing.JLabel infoLabel;
-    private javax.swing.JTextArea inputTextArea;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JMenu nuevo;
     private javax.swing.JLabel outputLabel;

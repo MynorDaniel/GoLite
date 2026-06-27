@@ -126,13 +126,11 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
         }
 
         if (a instanceof TipoArreglo ta && b instanceof TipoArreglo tb) {
-
             return ta.getBase() == tb.getBase()
                     && ta.getDimensiones() == tb.getDimensiones();
         }
 
         if (a instanceof TipoStruct ta && b instanceof TipoStruct tb) {
-
             return ta.getNombre().equals(tb.getNombre());
         }
 
@@ -309,7 +307,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
         Entorno anterior = entornoActual;
         entornoActual = new Entorno(anterior);
 
-        // insertar parámetros en entorno
         for (ParametroFuncion p : params) {
 
             Simbolo s = new Simbolo();
@@ -411,14 +408,12 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
         Entorno anterior = entornoActual;
         entornoActual = new Entorno(anterior);
 
-        // insertar receptor
         Simbolo s = new Simbolo();
         s.setId(varReceiver);
         s.setTipo(new TipoStruct(structName));
         s.setValor(null);
         entornoActual.insertar(s.getId(), s);
 
-        // insertar parámetros
         for (ParametroFuncion p : params) {
             if (p.getNombre().equals(varReceiver)) {
                 continue;
@@ -447,7 +442,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
     public Tipo visit(NodoDefStruct nodo) {
         String nombre = nodo.getNombreStruct();
 
-        // Redefinicion
         if (structs.containsKey(nombre)) {
             agregarError(
                     "El struct '" + nombre + "' ya existe",
@@ -457,11 +451,9 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
             return new TipoPrimitivo(TipoEnum.ERROR);
         }
 
-        // Registrar struct
         DefStruct def = new DefStruct(nombre);
         structs.put(nombre, def);
 
-        // Atributos
         for (NodoAtributoStruct attr : nodo.getAtributos()) {
 
             String idCampo = attr.getIdentificador();
@@ -501,7 +493,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
     @Override
     public Tipo visit(NodoBloque nodo) {
 
-        // Nuevo entorno
         Entorno anterior = entornoActual;
         entornoActual = new Entorno(anterior);
 
@@ -512,10 +503,8 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
                 e.printStackTrace();
                 agregarError("Error en instrucción", inst.getLinea(), inst.getColumna());
             }
-
         }
 
-        // Restaurar entorno al salir de todas las instrucciones
         entornoActual = anterior;
 
         return new TipoPrimitivo(TipoEnum.VOID);
@@ -524,7 +513,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
     @Override
     public Tipo visit(NodoIf nodo) {
 
-        // Condicion
         Tipo tipoCond = nodo.getCondicion().accept(this);
 
         if (!(tipoCond instanceof TipoPrimitivo tp
@@ -537,21 +525,15 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
             );
         }
 
-        // Bloque
         nodo.getBloqueThen().accept(this);
 
-        // Else
         if (nodo.getBloqueElse() != null) {
             nodo.getBloqueElse().accept(this);
         }
 
-        // Else if
         if (nodo.getElseIfSiguiente() != null) {
             nodo.getElseIfSiguiente().accept(this);
         }
-
-        //System.out.println(entornoActual.toString());
-        //System.out.println(structsToString());
 
         return new TipoPrimitivo(TipoEnum.VOID);
     }
@@ -564,12 +546,10 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
 
         if (!nodo.isEsRange()) {
 
-            // init
             if (nodo.getInit() != null) {
                 nodo.getInit().accept(this);
             }
 
-            // condición
             if (nodo.getCondicion() != null) {
 
                 Tipo tCond = nodo.getCondicion().accept(this);
@@ -585,7 +565,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
                 }
             }
 
-            // post
             if (nodo.getPost() != null) {
                 nodo.getPost().accept(this);
             }
@@ -621,7 +600,7 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
                 Tipo tipoVal;
 
                 if (tipoIterable instanceof TipoArreglo arr) {
-                    tipoVal = new TipoArreglo(arr.getBase(), 1);
+                    tipoVal = new TipoPrimitivo(arr.getBase());
                 } else {
                     tipoVal = new TipoPrimitivo(TipoEnum.RUNE);
                 }
@@ -653,7 +632,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
 
             Tipo tipoCaso = caso.getExpresion().accept(this);
 
-            // validar compatibilidad
             if (!sonCompatibles(tipoSwitch, tipoCaso)) {
                 agregarError(
                         "Tipo incompatible en switch case",
@@ -662,13 +640,11 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
                 );
             }
 
-            // visitar instrucciones del case
             for (NodoInstruccion i : caso.getInstrucciones()) {
                 i.accept(this);
             }
         }
 
-        // Default
         if (nodo.getCasoDefault() != null) {
             for (NodoInstruccion i : nodo.getCasoDefault().getInstrucciones()) {
                 i.accept(this);
@@ -877,15 +853,7 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
 
     @Override
     public Tipo visit(NodoAgrupacion nodo) {
-
-        Tipo tipo = nodo.getExpresion().accept(this);
-
-        if (tipo instanceof TipoPrimitivo t
-                && t.getBase() == TipoEnum.ERROR) {
-            return tipo;
-        }
-
-        return tipo;
+        return nodo.getExpresion().accept(this);
     }
 
     @Override
@@ -930,6 +898,72 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
     public Tipo visit(NodoLlamadaFuncion nodo) {
 
         String id = nodo.getIdentificador();
+
+        if (id.contains(".")) {
+            int punto = id.indexOf('.');
+            String nombreObj = id.substring(0, punto);
+            String nombreMetodo = id.substring(punto + 1);
+
+            Simbolo s = entornoActual.buscar(nombreObj);
+
+            if (s == null) {
+                agregarError(
+                        "La variable no existe: " + nombreObj,
+                        nodo.getLinea(),
+                        nodo.getColumna()
+                );
+                return new TipoPrimitivo(TipoEnum.ERROR);
+            }
+
+            if (!(s.getTipo() instanceof TipoStruct ts)) {
+                agregarError(
+                        "La variable no es un struct: " + nombreObj,
+                        nodo.getLinea(),
+                        nodo.getColumna()
+                );
+                return new TipoPrimitivo(TipoEnum.ERROR);
+            }
+
+            String key = ts.getNombre() + "." + nombreMetodo;
+            DefFuncion def = funciones.get(key);
+
+            if (def == null) {
+                agregarError(
+                        "El método no existe: " + nombreMetodo
+                        + " en struct " + ts.getNombre(),
+                        nodo.getLinea(),
+                        nodo.getColumna()
+                );
+                return new TipoPrimitivo(TipoEnum.ERROR);
+            }
+
+            List<ParametroFuncion> params = def.getParametros();
+            List<NodoExpresion> args = nodo.getArgumentos();
+
+            if (params.size() - 1 != args.size()) {
+                agregarError(
+                        "Cantidad de parámetros incorrecta en método " + nombreMetodo,
+                        nodo.getLinea(),
+                        nodo.getColumna()
+                );
+                return def.getRetorno();
+            }
+
+            for (int i = 0; i < args.size(); i++) {
+                Tipo tipoParam = params.get(i + 1).getTipo();
+                Tipo tipoArg = args.get(i).accept(this);
+
+                if (!sonCompatibles(tipoParam, tipoArg)) {
+                    agregarError(
+                            "Parámetro inválido en método " + nombreMetodo,
+                            nodo.getLinea(),
+                            nodo.getColumna()
+                    );
+                }
+            }
+
+            return def.getRetorno();
+        }
 
         DefFuncion def = funciones.get(id);
 
@@ -1018,7 +1052,7 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
         List<ParametroFuncion> params = def.getParametros();
         List<NodoExpresion> args = nodo.getArgumentos();
 
-        if (params.size() != args.size()) {
+        if (params.size() - 1 != args.size()) {
             agregarError(
                     "Cantidad de parámetros incorrecta en método "
                     + nodo.getMetodo(),
@@ -1028,9 +1062,8 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
             return def.getRetorno();
         }
 
-        for (int i = 0; i < params.size(); i++) {
-
-            Tipo tipoParam = params.get(i).getTipo();
+        for (int i = 0; i < args.size(); i++) {
+            Tipo tipoParam = params.get(i + 1).getTipo();
             Tipo tipoArg = args.get(i).accept(this);
 
             if (!sonCompatibles(tipoParam, tipoArg)) {
@@ -1152,7 +1185,13 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
                 return new TipoPrimitivo(TipoEnum.ERROR);
             }
 
-            return arr;
+            return new TipoPrimitivo(arr.getBase());
+        }
+
+        // Acceso con un solo índice
+        if (arr.getDimensiones() == 2) {
+            // arr[i] en una matriz devuelve una fila
+            return new TipoArreglo(arr.getBase(), 1);
         }
 
         return new TipoPrimitivo(arr.getBase());
@@ -1173,7 +1212,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
         }
 
         Tipo tipoValor = nodo.getValor().accept(this);
-
         Tipo tipoElemento = new TipoPrimitivo(arr.getBase());
 
         if (!sonCompatibles(tipoElemento, tipoValor)) {
@@ -1210,7 +1248,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
         for (NodoCampoStruct campoNodo : nodo.getCampos()) {
 
             String nombreCampo = campoNodo.getCampo();
-
             Tipo tipoEsperado = def.buscarCampo(nombreCampo);
 
             if (tipoEsperado == null) {
@@ -1247,25 +1284,49 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
     @Override
     public Tipo visit(NodoLiteralSlice nodo) {
 
-        Tipo tipoBase = nodo.getTipoBase().accept(this);
-
-        if (!(tipoBase instanceof TipoPrimitivo tpBase)) {
-            agregarError(
-                    "Tipo base inválido en slice literal",
-                    nodo.getLinea(),
-                    nodo.getColumna()
-            );
-            return new TipoPrimitivo(TipoEnum.ERROR);
-        }
-
-        TipoEnum base = tpBase.getBase();
-
         if (nodo.getDimensiones() == 1) {
 
+            if (nodo.getTipoBase() == null) {
+                // Inferir tipo desde los elementos
+                TipoEnum tipoInferido = TipoEnum.INT; // defecto
+
+                for (NodoExpresion expr : nodo.getExpresiones()) {
+                    Tipo t = expr.accept(this);
+                    if (t instanceof TipoPrimitivo tp) {
+                        tipoInferido = tp.getBase();
+                        break;
+                    }
+                }
+
+                for (NodoExpresion expr : nodo.getExpresiones()) {
+                    Tipo t = expr.accept(this);
+                    if (!sonCompatibles(new TipoPrimitivo(tipoInferido), t)) {
+                        agregarError(
+                                "Tipo incompatible en literal de slice",
+                                nodo.getLinea(),
+                                nodo.getColumna()
+                        );
+                    }
+                }
+
+                return new TipoArreglo(tipoInferido, 1);
+            }
+
+            Tipo tipoBase = nodo.getTipoBase().accept(this);
+
+            if (!(tipoBase instanceof TipoPrimitivo tpBase)) {
+                agregarError(
+                        "Tipo base inválido en slice literal",
+                        nodo.getLinea(),
+                        nodo.getColumna()
+                );
+                return new TipoPrimitivo(TipoEnum.ERROR);
+            }
+
+            TipoEnum base = tpBase.getBase();
+
             for (NodoExpresion expr : nodo.getExpresiones()) {
-
                 Tipo t = expr.accept(this);
-
                 if (!sonCompatibles(new TipoPrimitivo(base), t)) {
                     agregarError(
                             "Tipo incompatible en literal de slice",
@@ -1278,8 +1339,16 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
             return new TipoArreglo(base, 1);
         }
 
-        for (NodoLiteralSlice fila : nodo.getFilas()) {
+        TipoEnum base = TipoEnum.INT; // defecto
 
+        if (nodo.getTipoBase() != null) {
+            Tipo tipoBase = nodo.getTipoBase().accept(this);
+            if (tipoBase instanceof TipoPrimitivo tp) {
+                base = tp.getBase();
+            }
+        }
+
+        for (NodoLiteralSlice fila : nodo.getFilas()) {
             Tipo t = fila.accept(this);
 
             if (!(t instanceof TipoArreglo arr)) {
@@ -1308,15 +1377,12 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
 
         Tipo tipoExpr = nodo.getExpresion().accept(this);
 
-        // len(slice)
         if (tipoExpr instanceof TipoArreglo) {
             return new TipoPrimitivo(TipoEnum.INT);
         }
 
-        // len(string)
         if (tipoExpr instanceof TipoPrimitivo tp
                 && tp.getBase() == TipoEnum.STRING) {
-
             return new TipoPrimitivo(TipoEnum.INT);
         }
 
@@ -1345,6 +1411,20 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
 
         Tipo tipoValor = nodo.getValor().accept(this);
 
+        if (arr.getDimensiones() == 2) {
+            if (!(tipoValor instanceof TipoArreglo arrVal
+                    && arrVal.getBase() == arr.getBase()
+                    && arrVal.getDimensiones() == 1)) {
+                agregarError(
+                        "El valor agregado a la matriz debe ser un slice 1D del mismo tipo",
+                        nodo.getLinea(),
+                        nodo.getColumna()
+                );
+            }
+            return tipoSlice;
+        }
+
+        // Append en slice 1D normal
         Tipo tipoElemento = new TipoPrimitivo(arr.getBase());
 
         if (!sonCompatibles(tipoElemento, tipoValor)) {
@@ -1406,7 +1486,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
 
         if (t instanceof TipoPrimitivo tp
                 && tp.getBase() == TipoEnum.ERROR) {
-
             return t;
         }
 
@@ -1453,7 +1532,6 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
         for (NodoExpresion arg : nodo.getArgumentos()) {
             arg.accept(this);
         }
-
         return new TipoPrimitivo(TipoEnum.VOID);
     }
 
@@ -1588,7 +1666,11 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
             return tp;
         }
 
-        return new TipoArreglo(((TipoPrimitivo) base).getBase(), nodo.getDimensiones());
+        if (!(base instanceof TipoPrimitivo tpBase)) {
+            return new TipoArreglo(TipoEnum.ERROR, nodo.getDimensiones());
+        }
+
+        return new TipoArreglo(tpBase.getBase(), nodo.getDimensiones());
     }
 
     @Override
@@ -1607,7 +1689,7 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
     private String structsToString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("=== STRUCTS ===\n");
+        sb.append(" STRUCTS \n");
 
         if (structs.isEmpty()) {
             sb.append("(vacío)\n");

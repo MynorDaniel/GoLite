@@ -17,6 +17,14 @@
             <artifactId>cup_runtime</artifactId>
             <version>11b-20160615</version>
         </dependency>
+        
+        <!-- Source: https://mvnrepository.com/artifact/com.fifesoft/rsyntaxtextarea -->
+        <dependency>
+            <groupId>com.fifesoft</groupId>
+            <artifactId>rsyntaxtextarea</artifactId>
+            <version>3.6.3</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
     
     <build>

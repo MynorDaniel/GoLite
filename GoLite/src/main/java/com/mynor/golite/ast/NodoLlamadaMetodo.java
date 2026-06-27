@@ -32,7 +32,7 @@ public class NodoLlamadaMetodo extends NodoExpresion {
         return metodo;
     }
 
-    public List getArgumentos() {
+    public List<NodoExpresion> getArgumentos() {
         return argumentos;
     }
     

@@ -5,6 +5,7 @@ package com.mynor.golite;
 
 import com.mynor.golite.ast.*;
 import com.mynor.golite.ast.analizadorsemantico.AnalizadorSemantico;
+import com.mynor.golite.graphviz.ManejadorGraphviz;
 import com.mynor.golite.interprete.Ejecutor;
 import com.mynor.golite.lexer.LexerGLT;
 import com.mynor.golite.lexer.TipoToken;
@@ -42,7 +43,7 @@ public class GoLite {
     static void test() throws IOException, Exception {
         out = new PrintWriter(new FileWriter("/home/mynordma/testcompi/testx/salida.txt"));
 
-        FileReader reader = new FileReader(new File("/home/mynordma/testcompi/testx/testsemantica.glt"));
+        FileReader reader = new FileReader(new File("/home/mynordma/testcompi/testx/entrada.glt"));
         LexerGLT lexer = new LexerGLT(reader);
 
         ParserGLT parser = new ParserGLT(lexer);
@@ -67,7 +68,15 @@ public class GoLite {
         imprimirAST(ast, 0);
         
         Ejecutor ejecutor = new Ejecutor();
-        //ejecutor.visit(ast);
+        try {
+            ejecutor.visit(ast);
+        } catch (Exception e) {
+        }
+        
+        System.out.println(ejecutor.getSalida());
+        
+        ManejadorGraphviz m = new ManejadorGraphviz();
+        m.generarAST(ast, "/home/mynordma/testcompi/testx/");
         
         out.flush();
 
