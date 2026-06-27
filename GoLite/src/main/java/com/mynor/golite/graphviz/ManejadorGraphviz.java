@@ -19,7 +19,7 @@ public class ManejadorGraphviz implements Visitor<String> {
     private final StringBuilder dot = new StringBuilder();
     private int contador = 0;
 
-    public String generarAST(NodoPrograma nodo, String rutaAbsoluta) {
+    public String generarImagenAST(NodoPrograma nodo, String rutaAbsoluta) {
 
         String msg = "";
 

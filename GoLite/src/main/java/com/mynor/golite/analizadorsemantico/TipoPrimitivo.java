@@ -2,21 +2,21 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.mynor.golite.ast.analizadorsemantico;
+package com.mynor.golite.analizadorsemantico;
 
 /**
  *
  * @author mynordma
  */
-public class TipoStruct extends Tipo {
+public class TipoPrimitivo extends Tipo {
 
-    private final String nombre;
+    private final TipoEnum base;
 
-    public TipoStruct(String nombre) {
-        this.nombre = nombre;
+    public TipoPrimitivo(TipoEnum base) {
+        this.base = base;
     }
 
-    public String getNombre() {
-        return nombre;
+    public TipoEnum getBase() {
+        return base;
     }
 }

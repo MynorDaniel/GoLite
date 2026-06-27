@@ -4,7 +4,7 @@
 package com.mynor.golite;
 
 import com.mynor.golite.ast.*;
-import com.mynor.golite.ast.analizadorsemantico.AnalizadorSemantico;
+import com.mynor.golite.analizadorsemantico.AnalizadorSemantico;
 import com.mynor.golite.graphviz.ManejadorGraphviz;
 import com.mynor.golite.interprete.Ejecutor;
 import com.mynor.golite.lexer.LexerGLT;
@@ -33,17 +33,20 @@ public class GoLite {
     static PrintWriter out;
 
     public static void main(String[] args) throws FileNotFoundException, IOException, Exception {
-        //Ventana ventana = new Ventana();
-        //ventana.setVisible(true);
+        Ventana ventana = new Ventana();
+        ventana.setVisible(true);
 
-        test();
+        //test();
 
     }
 
+    /*
+        Método para ejecutar pruebas
+    */
     static void test() throws IOException, Exception {
         out = new PrintWriter(new FileWriter("/home/mynordma/testcompi/testx/salida.txt"));
 
-        FileReader reader = new FileReader(new File("/home/mynordma/testcompi/testx/entrada.glt"));
+        FileReader reader = new FileReader(new File("/home/mynordma/testcompi/testx/f2.glt"));
         LexerGLT lexer = new LexerGLT(reader);
 
         ParserGLT parser = new ParserGLT(lexer);
@@ -71,12 +74,13 @@ public class GoLite {
         try {
             ejecutor.visit(ast);
         } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
         
         System.out.println(ejecutor.getSalida());
         
         ManejadorGraphviz m = new ManejadorGraphviz();
-        m.generarAST(ast, "/home/mynordma/testcompi/testx/");
+        m.generarImagenAST(ast, "/home/mynordma/testcompi/testx/ast");
         
         out.flush();
 

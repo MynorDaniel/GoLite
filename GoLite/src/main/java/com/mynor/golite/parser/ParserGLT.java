@@ -1311,8 +1311,8 @@ public class ParserGLT extends java_cup.runtime.lr_parser {
     @Override
     public void unrecovered_syntax_error(Symbol cur_token) throws Exception {
         throw new Exception(
-            "Error sintáctico irrecuperable en " +
-            (ultimoError != null ? ubicacion(ultimoError) : "posición desconocida")
+            "Error sintáctico en " +
+            (ultimoError != null ? ubicacion(ultimoError) + " , verifica que exista func main(){}" : "posición desconocida")
         );
     }
 

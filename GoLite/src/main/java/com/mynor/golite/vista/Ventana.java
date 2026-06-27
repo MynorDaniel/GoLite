@@ -4,15 +4,15 @@
  */
 package com.mynor.golite.vista;
 
+import com.mynor.golite.analizadorsemantico.AnalizadorSemantico;
 import com.mynor.golite.ast.NodoPrograma;
+import com.mynor.golite.graphviz.ManejadorGraphviz;
 import com.mynor.golite.interprete.Ejecutor;
 import com.mynor.golite.lexer.LexerGLT;
 import com.mynor.golite.lexer.TipoToken;
 import com.mynor.golite.lexer.Token;
 import com.mynor.golite.parser.ParserGLT;
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +25,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.text.BadLocationException;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
-import org.fife.ui.rtextarea.Gutter;
-import org.fife.ui.rtextarea.LineNumberList;
-import org.fife.ui.rtextarea.RTextScrollPane;
 
 /**
  *
@@ -38,12 +35,13 @@ public class Ventana extends javax.swing.JFrame {
     private String rutaActual = "";
     private String rutaAbsolutaActual = "";
     private boolean cambiosSinGuardar = false;
-    private boolean hayErrores = false;
 
     RSyntaxTextArea editor = new RSyntaxTextArea(800, 600);
 
     private ArrayList<Token> tokens = new ArrayList<>();
-    private ArrayList<String[]> errores = new ArrayList<>(); // tipo, error
+    private ArrayList<String[]> errores = new ArrayList<>(); // tipo, error, ln, col
+    private String[][] tablaSimbolos;
+    private NodoPrograma programa;
 
     public Ventana() {
         initComponents();
@@ -77,7 +75,7 @@ public class Ventana extends javax.swing.JFrame {
         outputTextArea.setCaretColor(Color.WHITE);
         outputTextArea.setSelectionColor(new Color(38, 79, 120));
         outputTextArea.setDragEnabled(true);
-        
+
         editor.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -395,48 +393,57 @@ public class Ventana extends javax.swing.JFrame {
     private void execBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_execBtnActionPerformed
         // Ejecutar analisis
 
+        tablaSimbolos = null;
+        programa = null;
+
         String entrada = editor.getText();
         StringReader reader = new StringReader(entrada);
 
-        LexerGLT lexer = null;
+        LexerGLT lexer = new LexerGLT(reader);
+        ParserGLT parser = new ParserGLT(lexer);
+
+        Symbol result = null;
+        try {
+            result = parser.parse();
+
+        } catch (Exception ex) {
+            log(ex.getMessage());
+        }
+        NodoPrograma ast = (NodoPrograma) result.value;
+
+        AnalizadorSemantico analizadorSemantico = new AnalizadorSemantico();
 
         try {
-
-            lexer = new LexerGLT(reader);
-            ParserGLT p = new ParserGLT(lexer);
-
-            Symbol result = p.parse();
-
-            NodoPrograma ast = (NodoPrograma) result.value;
-
-            ArrayList<Token> tokensLexer = lexer.getTokens();
-            //List<String> erroresSintacticos = p.getErroresSintacticos();
-            ArrayList<Token> erroresLexicos = new ArrayList<>();
-
-            tokens.forEach(t -> {
-                if (t.getTipo() == TipoToken.ERROR) {
-                    erroresLexicos.add(t);
-                }
-            });
-
-            tokens = tokensLexer;
-
-            //if (ast != null && erroresLexicos.isEmpty() && erroresSintacticos.isEmpty()) {
-            //  analizarSemantica(ast);
-            //}
-            //cargarErrores(erroresLexicos, erroresSintacticos);
-            for (String[] err : errores) {
-                log(err[0] + " - " + err[1]);
-            }
-
-            Ejecutor interprete = new Ejecutor();
-            interprete.visit(ast);
-            //log(interprete.getConsola());
-
+            analizadorSemantico.visit(ast);
         } catch (Exception e) {
-            e.printStackTrace();
+            log("Error al analizar la semántica: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
 
+        cargarErrores(lexer.getTokens(), parser.getErroresSintacticos(), analizadorSemantico.getErrores());
+        tokens = lexer.getTokens();
+
+        Ejecutor ejecutor = new Ejecutor();
+        try {
+            ejecutor.visit(ast);
+        } catch (Exception e) {
+            log("Error al ejecutar el ast: " + e.getMessage());
+            System.out.println(e.getMessage());
+        }
+
+        errores.forEach(e -> {
+            log("Error " + e[0] + ": " + e[1] + " --- " + e[2] + "|" + e[3]);
+        });
+
+        if (ejecutor.getSalida().isBlank()) {
+            log("Salida vacía");
+        } else {
+            log("------------------- Ejecutando Programa -------------------");
+            log(ejecutor.getSalida());
+        }
+
+        tablaSimbolos = ejecutor.getTablaSimbolos();
+        programa = ast;
 
     }//GEN-LAST:event_execBtnActionPerformed
 
@@ -445,13 +452,21 @@ public class Ventana extends javax.swing.JFrame {
         outputTextArea.append(s);
     }
 
-    private void cargarErrores(ArrayList<Token> erroresLexicos, List<String> erroresSintacticos) {
+    private void cargarErrores(ArrayList<Token> erroresLexicos, List<String[]> erroresSintacticos, List<String[]> erroresSemanticos) {
         errores.clear();
+
         for (Token e : erroresLexicos) {
-            errores.add(new String[]{"Léxico", "Token " + e.getLexema() + " inesperado - ", String.valueOf(e.getLinea()) + "|" + String.valueOf(e.getColumna())});
+            if (e.getTipo() == TipoToken.ERROR) {
+                errores.add(new String[]{"Léxico", "Token " + e.getLexema() + " inesperado", String.valueOf(e.getLinea()), String.valueOf(e.getColumna())});
+            }
         }
-        for (String e : erroresSintacticos) {
-            errores.add(new String[]{"Sintáctico", e});
+
+        for (String[] errorSintactico : erroresSintacticos) {
+            errores.add(new String[]{"Sintáctico", errorSintactico[0], errorSintactico[1], errorSintactico[2]});
+        }
+
+        for (String[] errorSemantico : erroresSemanticos) {
+            errores.add(new String[]{"Semántico", errorSemantico[0], String.valueOf((Integer.parseInt(errorSemantico[1]) + 1)), String.valueOf((Integer.parseInt(errorSemantico[2]) + 1))});
         }
     }
 
@@ -480,7 +495,7 @@ public class Ventana extends javax.swing.JFrame {
 
         JScrollPane scrollPane = new JScrollPane(tablaTokens);
 
-        javax.swing.JDialog ventanaTokens = new javax.swing.JDialog(this, "Tabla de Tokens (Análisis Léxico)", true);
+        javax.swing.JDialog ventanaTokens = new javax.swing.JDialog(this, "Tabla de Tokens", true);
         ventanaTokens.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         ventanaTokens.setSize(600, 400);
         ventanaTokens.setLocationRelativeTo(this);
@@ -490,7 +505,7 @@ public class Ventana extends javax.swing.JFrame {
     }//GEN-LAST:event_tknsItemActionPerformed
 
     private void errItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_errItemActionPerformed
-        String[] columnas = {"Tipo de Error", "Descripción"};
+        String[] columnas = {"Tipo", "Descripción", "Ln", "Col"};
 
         DefaultTableModel modelo = new DefaultTableModel(columnas, 0) {
             @Override
@@ -508,21 +523,82 @@ public class Ventana extends javax.swing.JFrame {
 
         JScrollPane scrollPane = new JScrollPane(tablaErrores);
 
-        javax.swing.JDialog ventanaErrores = new javax.swing.JDialog(this, "Lista de Errores Semánticos", true);
+        javax.swing.JDialog ventanaErrores = new javax.swing.JDialog(this, "Errores", true);
         ventanaErrores.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        ventanaErrores.setSize(600, 300); // Ancho y alto de la ventana
-        ventanaErrores.setLocationRelativeTo(this); // Centrar la ventana respecto a la principal
+        ventanaErrores.setSize(600, 300);
+        ventanaErrores.setLocationRelativeTo(this);
 
         ventanaErrores.add(scrollPane);
         ventanaErrores.setVisible(true);
     }//GEN-LAST:event_errItemActionPerformed
 
     private void astItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_astItemActionPerformed
-        // TODO add your handling code here:
+        if (programa == null) {
+            log("AST vacío");
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Guardar AST");
+
+        fileChooser.setSelectedFile(new File("ast"));
+
+        int opcion = fileChooser.showSaveDialog(this);
+
+        if (opcion == JFileChooser.APPROVE_OPTION) {
+
+            File archivo = fileChooser.getSelectedFile();
+
+            String ruta = archivo.getAbsolutePath();
+
+            try {
+                ManejadorGraphviz m = new ManejadorGraphviz();
+                m.generarImagenAST(programa, ruta);
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "AST generado correctamente.",
+                        "Éxito",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Error al generar el AST:\n" + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        }
     }//GEN-LAST:event_astItemActionPerformed
 
     private void symItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_symItemActionPerformed
-        // TODO add your handling code here:
+        if (tablaSimbolos != null) {
+            String[] columnas = {"Categoría", "Nombre", "Tipo", "Valor", "Ámbito"};
+            DefaultTableModel modelo = new DefaultTableModel(columnas, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+            for (String[] fila : tablaSimbolos) {
+                modelo.addRow(fila);
+            }
+            JTable tabla = new JTable(modelo);
+            tabla.setFillsViewportHeight(true);
+            JScrollPane scrollPane = new JScrollPane(tabla);
+            javax.swing.JDialog ventana = new javax.swing.JDialog(this, "Tabla de Símbolos", true);
+            ventana.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+            ventana.setSize(700, 400);
+            ventana.setLocationRelativeTo(this);
+            ventana.add(scrollPane);
+            ventana.setVisible(true);
+        } else {
+            log("Tabla de Símbolos vacía");
+        }
+        
+        tablaSimbolos = null;
     }//GEN-LAST:event_symItemActionPerformed
 
     private void textoModificado() {
@@ -561,9 +637,5 @@ public class Ventana extends javax.swing.JFrame {
     private javax.swing.JMenuItem symItem;
     private javax.swing.JMenuItem tknsItem;
     // End of variables declaration//GEN-END:variables
-
-    private void analizarSemantica(NodoPrograma ast) {
-
-    }
 
 }
