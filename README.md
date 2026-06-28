@@ -8,12 +8,15 @@ Antes de compilar el proyecto asegúrese de tener instalado:
 
 - Java JDK 17 o superior
 - Apache Maven 3.8 o superior
+- Graphviz
 
 Puede verificar las versiones instaladas con:
 
 ```bash
 java --version
 mvn --version
+dot -V
+
 ```
 
 ---
