@@ -52,9 +52,6 @@ public class Ejecutor implements Visitor<Object> {
             return b ? "true" : "false";
         }
         if (val instanceof Double d) {
-            if (d == Math.floor(d) && !Double.isInfinite(d) && Math.abs(d) < 1e15) {
-                return d.longValue() + "";
-            }
             return d.toString();
         }
         if (val instanceof Character c) {
@@ -733,7 +730,7 @@ public class Ejecutor implements Visitor<Object> {
     public Object visit(NodoIdentificador nodo) {
         Simbolo s = entornoActual.buscar(nodo.getNombre());
         if (s == null) {
-            throw new RuntimeException("Variable no declarada: " + nodo.getNombre());
+            throw new RuntimeException("Variable no declarada en el entorno actual: " + nodo.getNombre());
         }
         return s.getValor();
     }

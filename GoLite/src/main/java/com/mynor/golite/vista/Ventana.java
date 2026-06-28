@@ -392,6 +392,8 @@ public class Ventana extends javax.swing.JFrame {
 
     private void execBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_execBtnActionPerformed
         // Ejecutar analisis
+        
+        outputTextArea.setText("");
 
         tablaSimbolos = null;
         programa = null;

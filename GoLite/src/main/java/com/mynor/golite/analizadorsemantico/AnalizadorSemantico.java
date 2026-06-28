@@ -908,7 +908,7 @@ public class AnalizadorSemantico implements Visitor<Tipo> {
 
             if (s == null) {
                 agregarError(
-                        "La variable no existe: " + nombreObj,
+                        "La variable no existe en el entorno actual: " + nombreObj,
                         nodo.getLinea(),
                         nodo.getColumna()
                 );
