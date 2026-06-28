@@ -1,15 +1,69 @@
 <programa> ::= <lista_globales>
-             ;
 
 <lista_globales> ::= <lista_globales> <declaracion_global>
-                   | /* vacío */
-                   ;
+                    | <lista_globales> PUNTO_COMA
+                    | 
 
 <declaracion_global> ::= <def_funcion>
                        | <def_struct>
                        | <declaracion_variable>
                        | <asignacion_variable>
-                       ;
+                       | <instancia_struct>
+
+<declaracion_variable> ::= VAR IDENTIFICADOR <tipo> ASIG <expresion>
+                         | VAR IDENTIFICADOR <tipo>
+                         | VAR IDENTIFICADOR <tipo_slice>
+                         | IDENTIFICADOR DECL_ASIG <expresion>
+
+<asignacion_variable> ::= IDENTIFICADOR ASIG <expresion>
+                        | IDENTIFICADOR PLUS_ASIG <expresion>
+                        | IDENTIFICADOR MINUS_ASIG <expresion>
+                        | IDENTIFICADOR INCREMENTO
+                        | IDENTIFICADOR DECREMENTO
+                        | IDENTIFICADOR COR_IZQ <expresion> COR_DER ASIG <expresion>
+                        | IDENTIFICADOR COR_IZQ <expresion> COR_DER
+                          COR_IZQ <expresion> COR_DER
+                          ASIG <expresion>
+                        | IDENTIFICADOR PUNTO IDENTIFICADOR ASIG <expresion>
+
+<def_struct> ::= STRUCT IDENTIFICADOR
+                 LLA_IZQ <lista_atributos_struct> LLA_DER
+
+<def_funcion> ::= FUNC MAIN PAR_IZQ PAR_DER <bloque>
+
+                 | FUNC IDENTIFICADOR
+                   PAR_IZQ <lista_parametros> PAR_DER
+                   <bloque>
+
+                 | FUNC IDENTIFICADOR
+                   PAR_IZQ <lista_parametros> PAR_DER
+                   <tipo>
+                   <bloque>
+
+                 | FUNC IDENTIFICADOR
+                   PAR_IZQ <lista_parametros> PAR_DER
+                   <tipo_slice>
+                   <bloque>
+
+                 | FUNC
+                   PAR_IZQ IDENTIFICADOR IDENTIFICADOR PAR_DER
+                   IDENTIFICADOR
+                   PAR_IZQ <lista_parametros> PAR_DER
+                   <bloque>
+
+                 | FUNC
+                   PAR_IZQ IDENTIFICADOR IDENTIFICADOR PAR_DER
+                   IDENTIFICADOR
+                   PAR_IZQ <lista_parametros> PAR_DER
+                   <tipo>
+                   <bloque>
+
+                 | FUNC
+                   PAR_IZQ IDENTIFICADOR IDENTIFICADOR PAR_DER
+                   IDENTIFICADOR
+                   PAR_IZQ <lista_parametros> PAR_DER
+                   <tipo_slice>
+                   <bloque>
 
 <tipo> ::= INT
          | FLOAT64
@@ -17,247 +71,215 @@
          | BOOL
          | RUNE
          | IDENTIFICADOR
-         ;
 
 <tipo_slice> ::= COR_IZQ COR_DER <tipo>
                | COR_IZQ COR_DER COR_IZQ COR_DER <tipo>
-               ;
-
-
-<declaracion_variable> ::=
-      VAR IDENTIFICADOR <tipo> ASIG <expresion>
-    | VAR IDENTIFICADOR <tipo>
-    | VAR IDENTIFICADOR <tipo_slice>
-    | IDENTIFICADOR DECL_ASIG <expresion>
-    ;
-
-<asignacion_variable> ::=
-      IDENTIFICADOR ASIG <expresion>
-    | IDENTIFICADOR PLUS_ASIG <expresion>
-    | IDENTIFICADOR MINUS_ASIG <expresion>
-    | IDENTIFICADOR MAS MAS
-    | IDENTIFICADOR MENOS MENOS
-    | IDENTIFICADOR COR_IZQ <expresion> COR_DER ASIG <expresion>
-    | IDENTIFICADOR COR_IZQ <expresion> COR_DER COR_IZQ <expresion> COR_DER ASIG <expresion>
-    | IDENTIFICADOR PUNTO IDENTIFICADOR ASIG <expresion>
-    ;
-
-<def_struct> ::= STRUCT IDENTIFICADOR LLA_IZQ <lista_atributos_struct> LLA_DER
-               ;
 
 <lista_atributos_struct> ::= <lista_atributos_struct> <atributo_struct>
                            | <atributo_struct>
-                           ;
 
 <atributo_struct> ::= <tipo> IDENTIFICADOR PUNTO_COMA
                     | <tipo_slice> IDENTIFICADOR PUNTO_COMA
-                    ;
+                    | <tipo> IDENTIFICADOR
+                    | <tipo_slice> IDENTIFICADOR
 
-<instancia_struct> ::= IDENTIFICADOR LLA_IZQ <lista_campos_struct> LLA_DER
-                     ;
+<instancia_struct> ::= IDENTIFICADOR IDENTIFICADOR
+                       ASIG
+                       LLA_IZQ <lista_campos_struct> LLA_DER
+
+                     | IDENTIFICADOR IDENTIFICADOR
+                       ASIG
+                       LLA_IZQ LLA_DER
 
 <lista_campos_struct> ::= <lista_campos_struct> COMA <campo_struct>
                         | <campo_struct>
-                        ;
 
 <campo_struct> ::= IDENTIFICADOR DOS_PUNTOS <expresion>
-                 ;
 
-<def_funcion> ::=
-      FUNC MAIN PAR_IZQ PAR_DER <bloque>
-    | FUNC IDENTIFICADOR PAR_IZQ <lista_parametros> PAR_DER <bloque>
-    | FUNC IDENTIFICADOR PAR_IZQ <lista_parametros> PAR_DER <tipo> <bloque>
-    | FUNC IDENTIFICADOR PAR_IZQ <lista_parametros> PAR_DER <tipo_slice> <bloque>
-    | FUNC PAR_IZQ IDENTIFICADOR IDENTIFICADOR PAR_DER IDENTIFICADOR PAR_IZQ <lista_parametros> PAR_DER <bloque>
-    | FUNC PAR_IZQ IDENTIFICADOR IDENTIFICADOR PAR_DER IDENTIFICADOR PAR_IZQ <lista_parametros> PAR_DER <tipo> <bloque>
-    | FUNC PAR_IZQ IDENTIFICADOR IDENTIFICADOR PAR_DER IDENTIFICADOR PAR_IZQ <lista_parametros> PAR_DER <tipo_slice> <bloque>
-    ;
+<lista_parametros> ::= <lista_parametros_no_vacia>
+                     | 
 
-<lista_parametros> ::= <lista_parametros> COMA <parametro>
-                     | <parametro>
-                     | /* vacío */
-                     ;
+<lista_parametros_no_vacia> ::= <lista_parametros_no_vacia> COMA <parametro>
+                              | <parametro>
 
 <parametro> ::= IDENTIFICADOR <tipo>
               | IDENTIFICADOR <tipo_slice>
-              ;
 
 <bloque> ::= LLA_IZQ <instrucciones> LLA_DER
-           ;
 
-<instrucciones> ::= <instrucciones> <instruccion>
-                  | /* vacío */
-                  ;
+<instrucciones> ::= <instrucciones> <instruccion_terminada>
+                  | 
 
-<instruccion> ::=
-      <declaracion_variable>
-    | <asignacion_variable>
-    | <bloque>
-    | <sent_if>
-    | <sent_switch>
-    | <sent_for>
-    | <sent_break>
-    | <sent_continue>
-    | <sent_return>
-    | <sent_println>
-    | <llamada_funcion>
-    | <llamada_metodo_struct>
-    ;
+<instruccion_terminada> ::= <instruccion> PUNTO_COMA
+                          | <instruccion>
 
-<sent_if> ::=
-      IF <expresion> <bloque>
-    | IF <expresion> <bloque> ELSE <bloque>
-    | IF <expresion> <bloque> ELSE <sent_if>
-    | IF PAR_IZQ <expresion> PAR_DER <bloque>
-    | IF PAR_IZQ <expresion> PAR_DER <bloque> ELSE <bloque>
-    | IF PAR_IZQ <expresion> PAR_DER <bloque> ELSE <sent_if>
-    ;
+<instruccion> ::= <declaracion_variable>
+                | <asignacion_variable>
+                | <bloque>
+                | <sent_if>
+                | <sent_switch>
+                | <sent_for>
+                | <sent_break>
+                | <sent_continue>
+                | <sent_return>
+                | <llamada_funcion>
+                | <instancia_struct>
 
-<sent_switch> ::=
-      SWITCH <expresion> LLA_IZQ <lista_cases> LLA_DER
-    | SWITCH <expresion> LLA_IZQ <lista_cases> <caso_default> LLA_DER
-    ;
+<sent_if> ::= IF <expresion> <bloque>
+            | IF <expresion> <bloque> ELSE <bloque>
+            | IF <expresion> <bloque> ELSE <sent_if>
+            | IF PAR_IZQ <expresion> PAR_DER <bloque>
+            | IF PAR_IZQ <expresion> PAR_DER <bloque> ELSE <bloque>
+            | IF PAR_IZQ <expresion> PAR_DER <bloque> ELSE <sent_if>
+
+<sent_switch> ::= SWITCH <expresion>
+                  LLA_IZQ <lista_cases> LLA_DER
+
+                | SWITCH <expresion>
+                  LLA_IZQ <lista_cases> <caso_default> LLA_DER
 
 <lista_cases> ::= <lista_cases> <caso>
-                | /* vacío */
-                ;
+                | 
 
 <caso> ::= CASE <expresion> DOS_PUNTOS <instrucciones>
-         ;
 
 <caso_default> ::= DEFAULT DOS_PUNTOS <instrucciones>
-                 ;
 
-<sent_for> ::=
-      FOR <expresion> <bloque>
-    | FOR <sent_for_init> PUNTO_COMA <expresion> PUNTO_COMA <sent_for_post> <bloque>
-    | FOR IDENTIFICADOR COMA IDENTIFICADOR DECL_ASIG RANGE <expresion> <bloque>
-    ;
+<sent_for> ::= FOR <expresion> <bloque>
+
+             | FOR <sent_for_init>
+               PUNTO_COMA
+               <expresion>
+               PUNTO_COMA
+               <sent_for_post>
+               <bloque>
+
+             | FOR IDENTIFICADOR COMA IDENTIFICADOR
+               DECL_ASIG RANGE <expresion>
+               <bloque>
+
+             | FOR PAR_IZQ <expresion> PAR_DER <bloque>
+
+             | FOR PAR_IZQ
+               <sent_for_init>
+               PUNTO_COMA
+               <expresion>
+               PUNTO_COMA
+               <sent_for_post>
+               PAR_DER
+               <bloque>
+
+             | FOR PAR_IZQ
+               IDENTIFICADOR COMA IDENTIFICADOR
+               DECL_ASIG RANGE <expresion>
+               PAR_DER
+               <bloque>
 
 <sent_for_init> ::= <declaracion_variable>
                   | <asignacion_variable>
-                  ;
 
 <sent_for_post> ::= <asignacion_variable>
-                  | IDENTIFICADOR MAS MAS
-                  | IDENTIFICADOR MENOS MENOS
-                  ;
 
-<sent_break>    ::= BREAK
-                  ;
+<sent_break> ::= BREAK
 
 <sent_continue> ::= CONTINUE
-                  ;
 
-<sent_return>   ::= RETURN <expresion>
-                  | RETURN
-                  ;
+<sent_return> ::= RETURN <expresion>
+                | RETURN
 
-<llamada_funcion> ::=
-      IDENTIFICADOR PAR_IZQ <lista_argumentos> PAR_DER
-    ;
+<llamada_funcion> ::= IDENTIFICADOR
+                      PAR_IZQ <lista_argumentos> PAR_DER
 
-<llamada_metodo_struct> ::=
-      IDENTIFICADOR PUNTO IDENTIFICADOR PAR_IZQ <lista_argumentos> PAR_DER
-    ;
+                    | IDENTIFICADOR PUNTO IDENTIFICADOR
+                      PAR_IZQ <lista_argumentos> PAR_DER
+
+                    | FMT PUNTO PRINTLN
+                      PAR_IZQ <lista_argumentos> PAR_DER
 
 <lista_argumentos> ::= <lista_argumentos> COMA <expresion>
                      | <expresion>
-                     | /* vacío */
-                     ;
+                     | 
 
-<sent_println> ::=
-      FMT PUNTO PRINTLN PAR_IZQ <lista_argumentos> PAR_DER
-    ;
+<expr_atoi> ::= STRCONV PUNTO ATOI
+                PAR_IZQ <expresion> PAR_DER
 
-<expr_atoi> ::=
-      STRCONV PUNTO ATOI PAR_IZQ <expresion> PAR_DER
-    ;
+<expr_parsefloat> ::= STRCONV PUNTO PARSEFLOAT
+                      PAR_IZQ <expresion> PAR_DER
 
-<expr_parsefloat> ::=
-      STRCONV PUNTO PARSEFLOAT PAR_IZQ <expresion> PAR_DER
-    ;
+<expr_typeof> ::= REFLECT PUNTO TYPEOF
+                  PAR_IZQ <expresion> PAR_DER
 
-<expr_typeof> ::=
-      REFLECT PUNTO TYPEOF PAR_IZQ <expresion> PAR_DER
-    ;
+<expr_slices_index> ::= SLICES PUNTO INDEX
+                        PAR_IZQ <expresion> COMA <expresion> PAR_DER
 
-<expr_slices_index> ::=
-      SLICES PUNTO INDEX PAR_IZQ <expresion> COMA <expresion> PAR_DER
-    ;
+<expr_strings_join> ::= STRINGS PUNTO JOIN
+                        PAR_IZQ <expresion> COMA <expresion> PAR_DER
 
-<expr_strings_join> ::=
-      STRINGS PUNTO JOIN PAR_IZQ <expresion> COMA <expresion> PAR_DER
-    ;
+<expr_len> ::= LEN PAR_IZQ <expresion> PAR_DER
 
-<expr_len> ::=
-      LEN PAR_IZQ <expresion> PAR_DER
-    ;
+<expr_append> ::= APPEND
+                  PAR_IZQ <expresion> COMA <expresion> PAR_DER
 
-<expr_append> ::=
-      APPEND PAR_IZQ <expresion> COMA <expresion> PAR_DER
-    ;
+<expresion> ::= <expresion> OR <expresion>
+              | <expresion> AND <expresion>
+              | <expresion> IGUAL <expresion>
+              | <expresion> NO_IGUAL <expresion>
+              | <expresion> MAYOR <expresion>
+              | <expresion> MENOR <expresion>
+              | <expresion> MAYOR_IGUAL <expresion>
+              | <expresion> MENOR_IGUAL <expresion>
+              | <expresion> MAS <expresion>
+              | <expresion> MENOS <expresion>
+              | <expresion> MULT <expresion>
+              | <expresion> DIV <expresion>
+              | <expresion> MODULO <expresion>
+              | MENOS <expresion>
+              | NOT <expresion>
+              | <operando>
 
-<expresion> ::=
-      <expresion> OR <expresion>
-    | <expresion> AND <expresion>
-    | <expresion> IGUAL <expresion>
-    | <expresion> NO_IGUAL <expresion>
-    | <expresion> MAYOR <expresion>
-    | <expresion> MENOR <expresion>
-    | <expresion> MAYOR_IGUAL <expresion>
-    | <expresion> MENOR_IGUAL <expresion>
-    | <expresion> MAS <expresion>
-    | <expresion> MENOS <expresion>
-    | <expresion> MULT <expresion>
-    | <expresion> DIV <expresion>
-    | <expresion> MODULO <expresion>
-    | MENOS <expresion>
-    | NOT <expresion>
-    | PAR_IZQ <expresion> PAR_DER
-    | <operando>
-    ;
+<operando> ::= ENTERO
+             | FLOTANTE
+             | CADENA
+             | RUNE_LIT
+             | TRUE
+             | FALSE
+             | NIL
+             | IDENTIFICADOR
+             | IDENTIFICADOR COR_IZQ <expresion> COR_DER
+             | IDENTIFICADOR COR_IZQ <expresion> COR_DER
+               COR_IZQ <expresion> COR_DER
+             | PAR_IZQ <expresion> PAR_DER
+             | <llamada_funcion>
+             | <expr_atoi>
+             | <expr_parsefloat>
+             | <expr_typeof>
+             | <expr_slices_index>
+             | <expr_strings_join>
+             | <expr_len>
+             | <expr_append>
+             | <literal_slice>
+             | IDENTIFICADOR PUNTO IDENTIFICADOR
 
-<operando> ::=
-      ENTERO
-    | FLOTANTE
-    | CADENA
-    | RUNE_LIT
-    | TRUE
-    | FALSE
-    | NIL
-    | IDENTIFICADOR
-    | IDENTIFICADOR COR_IZQ <expresion> COR_DER
-    | IDENTIFICADOR COR_IZQ <expresion> COR_DER COR_IZQ <expresion> COR_DER
-    | IDENTIFICADOR PUNTO IDENTIFICADOR
-    | <llamada_funcion>
-    | <llamada_metodo_struct>
-    | <sent_println>
-    | <expr_atoi>
-    | <expr_parsefloat>
-    | <expr_typeof>
-    | <expr_slices_index>
-    | <expr_strings_join>
-    | <expr_len>
-    | <expr_append>
-    | <instancia_struct>
-    | <literal_slice>
-    ;
+<literal_slice> ::= COR_IZQ COR_DER <tipo>
+                    LLA_IZQ <lista_expresiones> LLA_DER
 
-<literal_slice> ::=
-      COR_IZQ COR_DER <tipo> LLA_IZQ <lista_expresiones> LLA_DER
-    | COR_IZQ COR_DER <tipo> LLA_IZQ LLA_DER
-    | COR_IZQ COR_DER COR_IZQ COR_DER <tipo> LLA_IZQ <lista_filas_slice> LLA_DER
-    | COR_IZQ COR_DER COR_IZQ COR_DER <tipo> LLA_IZQ LLA_DER
-    ;
+                  | COR_IZQ COR_DER <tipo>
+                    LLA_IZQ LLA_DER
+
+                  | COR_IZQ COR_DER
+                    COR_IZQ COR_DER
+                    <tipo>
+                    LLA_IZQ <lista_filas_slice> LLA_DER
+
+                  | COR_IZQ COR_DER
+                    COR_IZQ COR_DER
+                    <tipo>
+                    LLA_IZQ LLA_DER
 
 <lista_filas_slice> ::= <lista_filas_slice> COMA <fila_slice>
                       | <fila_slice>
-                      ;
 
 <fila_slice> ::= LLA_IZQ <lista_expresiones> LLA_DER
-               ;
 
 <lista_expresiones> ::= <lista_expresiones> COMA <expresion>
                       | <expresion>
-                      ;

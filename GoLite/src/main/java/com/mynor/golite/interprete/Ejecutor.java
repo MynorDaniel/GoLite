@@ -95,13 +95,14 @@ public class Ejecutor implements Visitor<Object> {
         entornoGlobal = global;
 
         for (NodoDeclaracionGlobal decl : nodo.getGlobales()) {
-            decl.accept(this);
+            try {
+                decl.accept(this);
+            } catch (Exception e) {
+            }
+
         }
 
         DefFuncion main = funciones.get("main");
-        if (main == null) {
-            throw new RuntimeException("No se encontró la función main");
-        }
 
         ejecutarFuncion(main, new ArrayList<>());
         return null;
@@ -245,9 +246,6 @@ public class Ejecutor implements Visitor<Object> {
         String op = nodo.getOperador();
 
         Simbolo s = entornoActual.buscar(id);
-        if (s == null) {
-            throw new RuntimeException("Variable no declarada: " + id);
-        }
 
         NodoExpresion indiceNodo = nodo.getIndice1();
 
@@ -257,7 +255,7 @@ public class Ejecutor implements Visitor<Object> {
 
             Object coleccion = s.getValor();
             if (!(coleccion instanceof List outerList)) {
-                throw new RuntimeException("La variable " + id + " no es un slice");
+                return null;
             }
 
             if (nodo.getIndice2() != null) {
@@ -266,7 +264,7 @@ public class Ejecutor implements Visitor<Object> {
 
                 Object filaObj = outerList.get(idx1);
                 if (!(filaObj instanceof List innerList)) {
-                    throw new RuntimeException("El elemento [" + idx1 + "] de " + id + " no es un slice");
+                    return null;
                 }
                 if (nodo.getExpresion() != null) {
                     innerList.set(idx2, nodo.getExpresion().accept(this));
@@ -289,7 +287,7 @@ public class Ejecutor implements Visitor<Object> {
             } else if (actual instanceof Double d) {
                 nuevo = "++".equals(op) ? d + 1.0 : d - 1.0;
             } else {
-                throw new RuntimeException("Operador " + op + " no aplicable a " + actual);
+                return null;
             }
             s.setValor(nuevo);
             entornoActual.actualizar(id, s);
@@ -311,7 +309,7 @@ public class Ejecutor implements Visitor<Object> {
             case "/=" ->
                 dividir(actual, exprVal);
             default ->
-                throw new RuntimeException("Operador de asignación no soportado: " + op);
+                null;
         };
 
         resultado = coercionar(resultado, s.getTipo());
@@ -323,13 +321,10 @@ public class Ejecutor implements Visitor<Object> {
     @Override
     public Object visit(NodoAsignCampo nodo) {
         Simbolo s = entornoActual.buscar(nodo.getObjeto());
-        if (s == null) {
-            throw new RuntimeException("Variable no declarada: " + nodo.getObjeto());
-        }
 
         Object instancia = s.getValor();
         if (!(instancia instanceof Map map)) {
-            throw new RuntimeException("La variable " + nodo.getObjeto() + " no es un struct");
+            return null;
         }
 
         map.put(nodo.getCampo(), nodo.getExpresion().accept(this));
@@ -431,12 +426,16 @@ public class Ejecutor implements Visitor<Object> {
 
         Object resultado = null;
         for (NodoInstruccion ins : nodo.getInstrucciones()) {
-            resultado = ins.accept(this);
-            if (resultado instanceof ReturnControl
-                    || resultado instanceof BreakControl
-                    || resultado instanceof ContinueControl) {
-                break;
+            try {
+                resultado = ins.accept(this);
+                if (resultado instanceof ReturnControl
+                        || resultado instanceof BreakControl
+                        || resultado instanceof ContinueControl) {
+                    break;
+                }
+            } catch (Exception e) {
             }
+
         }
 
         entornoActual = anterior;
@@ -447,7 +446,7 @@ public class Ejecutor implements Visitor<Object> {
     public Object visit(NodoIf nodo) {
         Object cond = nodo.getCondicion().accept(this);
         if (!(cond instanceof Boolean)) {
-            throw new RuntimeException("Condición del if no es booleana");
+            return null;
         }
 
         if ((Boolean) cond) {
@@ -477,7 +476,7 @@ public class Ejecutor implements Visitor<Object> {
                 if (nodo.getCondicion() != null) {
                     Object cond = nodo.getCondicion().accept(this);
                     if (!(cond instanceof Boolean)) {
-                        throw new RuntimeException("Condición del for no es booleana");
+                        return null;
                     }
                     if (!(Boolean) cond) {
                         break;
@@ -669,7 +668,7 @@ public class Ejecutor implements Visitor<Object> {
             case ">=" ->
                 comparar(izq, der) >= 0;
             default ->
-                throw new RuntimeException("Operador binario no soportado: " + op);
+                "";
         };
     }
 
@@ -686,10 +685,10 @@ public class Ejecutor implements Visitor<Object> {
                 if (val instanceof Double d) {
                     yield -d;
                 }
-                throw new RuntimeException("Operador - unario no aplicable a " + val);
+                yield null;
             }
             default ->
-                throw new RuntimeException("Operador unario no soportado: " + nodo.getOperador());
+                null;
         };
     }
 
@@ -719,7 +718,7 @@ public class Ejecutor implements Visitor<Object> {
                 case "string" ->
                     procesarEscapes(rawVal);
                 default ->
-                    throw new RuntimeException("Tipo literal no soportado: " + tipo);
+                    null;
             };
         } catch (Exception e) {
             return null;
@@ -729,9 +728,7 @@ public class Ejecutor implements Visitor<Object> {
     @Override
     public Object visit(NodoIdentificador nodo) {
         Simbolo s = entornoActual.buscar(nodo.getNombre());
-        if (s == null) {
-            throw new RuntimeException("Variable no declarada en el entorno actual: " + nodo.getNombre());
-        }
+
         return s.getValor();
     }
 
@@ -745,21 +742,18 @@ public class Ejecutor implements Visitor<Object> {
             String metodo = id.substring(punto + 1);
 
             Simbolo s = entornoActual.buscar(nombreObj);
-            if (s == null) {
-                throw new RuntimeException("Objeto no declarado: " + nombreObj);
-            }
 
             if (!(s.getValor() instanceof Map<?, ?> rawMap)) {
-                throw new RuntimeException("La variable " + nombreObj + " no es una instancia de struct");
+                return null;
             }
             if (!(s.getTipo() instanceof TipoStruct ts)) {
-                throw new RuntimeException("No se pudo determinar el tipo struct de: " + nombreObj);
+                return null;
             }
 
             String key = ts.getNombre() + "." + metodo;
             DefFuncion def = funciones.get(key);
             if (def == null) {
-                throw new RuntimeException("Método no definido: " + key);
+                return null;
             }
 
             List<Object> args = new ArrayList<>();
@@ -770,9 +764,6 @@ public class Ejecutor implements Visitor<Object> {
         }
 
         DefFuncion def = funciones.get(id);
-        if (def == null) {
-            throw new RuntimeException("Función no definida: " + id);
-        }
 
         List<Object> args = new ArrayList<>();
         for (NodoExpresion arg : nodo.getArgumentos()) {
@@ -784,22 +775,16 @@ public class Ejecutor implements Visitor<Object> {
     @Override
     public Object visit(NodoLlamadaMetodo nodo) {
         Simbolo s = entornoActual.buscar(nodo.getObjeto());
-        if (s == null) {
-            throw new RuntimeException("Objeto no declarado: " + nodo.getObjeto());
-        }
 
         if (!(s.getValor() instanceof Map<?, ?> rawMap)) {
-            throw new RuntimeException("La variable " + nodo.getObjeto() + " no es una instancia de struct");
+            return null;
         }
         if (!(s.getTipo() instanceof TipoStruct ts)) {
-            throw new RuntimeException("No se pudo determinar el tipo struct de: " + nodo.getObjeto());
+            return null;
         }
 
         String key = ts.getNombre() + "." + nodo.getMetodo();
         DefFuncion def = funciones.get(key);
-        if (def == null) {
-            throw new RuntimeException("Método no definido: " + key);
-        }
 
         List<Object> args = new ArrayList<>();
         for (NodoExpresion arg : nodo.getArgumentos()) {
@@ -811,12 +796,9 @@ public class Ejecutor implements Visitor<Object> {
     @Override
     public Object visit(NodoAccesoCampo nodo) {
         Simbolo s = entornoActual.buscar(nodo.getObjeto());
-        if (s == null) {
-            throw new RuntimeException("Variable no declarada: " + nodo.getObjeto());
-        }
 
         if (!(s.getValor() instanceof Map map)) {
-            throw new RuntimeException("La variable " + nodo.getObjeto() + " no es un struct");
+            return null;
         }
         return map.get(nodo.getCampo());
     }
@@ -824,9 +806,6 @@ public class Ejecutor implements Visitor<Object> {
     @Override
     public Object visit(NodoAccesoSlice nodo) {
         Simbolo s = entornoActual.buscar(nodo.getIdentificador());
-        if (s == null) {
-            throw new RuntimeException("Variable no declarada: " + nodo.getIdentificador());
-        }
 
         Object coleccion = s.getValor();
         int idx1 = toInt(nodo.getIndice1().accept(this));
@@ -834,10 +813,10 @@ public class Ejecutor implements Visitor<Object> {
         if (nodo.getIndice2() != null) {
             int idx2 = toInt(nodo.getIndice2().accept(this));
             if (!(coleccion instanceof List outerList)) {
-                throw new RuntimeException("La variable " + nodo.getIdentificador() + " no es una matriz");
+                return null;
             }
             if (!(outerList.get(idx1) instanceof List innerList)) {
-                throw new RuntimeException("El elemento [" + idx1 + "] de " + nodo.getIdentificador() + " no es un slice");
+                return null;
             }
             return innerList.get(idx2);
         }
@@ -848,7 +827,7 @@ public class Ejecutor implements Visitor<Object> {
         if (coleccion instanceof String str) {
             return str.charAt(idx1);
         }
-        throw new RuntimeException("La variable " + nodo.getIdentificador() + " no es indexable");
+        return null;
     }
 
     @Override
@@ -906,14 +885,14 @@ public class Ejecutor implements Visitor<Object> {
         if (val instanceof String str) {
             return str.length();
         }
-        throw new RuntimeException("len() no aplicable a: " + val);
+        return 0;
     }
 
     @Override
     public Object visit(NodoAppend nodo) {
         Object sliceObj = nodo.getSlice().accept(this);
         if (!(sliceObj instanceof List list)) {
-            throw new RuntimeException("append() requiere un slice");
+            return null;
         }
         List<Object> nueva = new ArrayList<>(list);
         nueva.add(nodo.getValor().accept(this));
@@ -924,12 +903,12 @@ public class Ejecutor implements Visitor<Object> {
     public Object visit(NodoAtoi nodo) {
         Object val = nodo.getExpresion().accept(this);
         if (!(val instanceof String str)) {
-            throw new RuntimeException("atoi() requiere string");
+            return null;
         }
         try {
             return Integer.parseInt(str.trim());
         } catch (NumberFormatException e) {
-            throw new RuntimeException("atoi(): no se puede convertir \"" + str + "\" a int");
+            return null;
         }
     }
 
@@ -937,12 +916,12 @@ public class Ejecutor implements Visitor<Object> {
     public Object visit(NodoParsefloat nodo) {
         Object val = nodo.getExpresion().accept(this);
         if (!(val instanceof String str)) {
-            throw new RuntimeException("parseFloat() requiere string");
+            return null;
         }
         try {
             return Double.parseDouble(str.trim());
         } catch (NumberFormatException e) {
-            throw new RuntimeException("parseFloat(): no se puede convertir \"" + str + "\" a float64");
+            return null;
         }
     }
 
@@ -982,7 +961,7 @@ public class Ejecutor implements Visitor<Object> {
         Object sliceObj = nodo.getSlice().accept(this);
         Object valor = nodo.getValor().accept(this);
         if (!(sliceObj instanceof List list)) {
-            throw new RuntimeException("slices.Index() requiere un slice");
+            return null;
         }
         for (int i = 0; i < list.size(); i++) {
             if (sonIguales(list.get(i), valor)) {
@@ -997,7 +976,7 @@ public class Ejecutor implements Visitor<Object> {
         Object sliceObj = nodo.getSlice().accept(this);
         Object sepObj = nodo.getSeparador().accept(this);
         if (!(sliceObj instanceof List list)) {
-            throw new RuntimeException("strings.Join() requiere un slice");
+            return null;
         }
         String sep = sepObj != null ? sepObj.toString() : "";
         StringBuilder sb = new StringBuilder();
@@ -1126,22 +1105,32 @@ public class Ejecutor implements Visitor<Object> {
         if (a instanceof Double || b instanceof Double) {
             double divisor = toDouble(b);
             if (divisor == 0.0) {
-                throw new RuntimeException("División por cero");
+                return 0.0;
             }
+            
             return toDouble(a) / divisor;
         }
         int divisor = toInt(b);
         if (divisor == 0) {
-            throw new RuntimeException("División por cero");
+                return 0;
+            }
+        double res = ((double) toInt(a)) / ((double) divisor);
+        System.out.println(toInt(b));
+        System.out.println(toInt(a));
+        System.out.println("Res: " + res);
+
+        if (res % 1 == 0) {
+            System.out.println("Entero");
+            return (int) res;
+        } else {
+            System.out.println("Decimal");
+            return res;
         }
-        return toInt(a) / divisor;
     }
 
     private Object modulo(Object a, Object b) {
         int divisor = toInt(b);
-        if (divisor == 0) {
-            throw new RuntimeException("Módulo por cero");
-        }
+
         return toInt(a) % divisor;
     }
 
@@ -1168,7 +1157,8 @@ public class Ejecutor implements Visitor<Object> {
         if (v instanceof Boolean b) {
             return b ? 1 : 0;
         }
-        throw new RuntimeException("No se puede convertir a int: " + v);
+
+        return 0;
     }
 
     private double toDouble(Object v) {
@@ -1181,7 +1171,7 @@ public class Ejecutor implements Visitor<Object> {
         if (v instanceof Character c) {
             return (double) c;
         }
-        throw new RuntimeException("No se puede convertir a double: " + v);
+        return 0.0;
     }
 
     private Object coercionar(Object val, Tipo tipo) {
