@@ -89,7 +89,7 @@ GoLite/
 ```go
 func main() {
 
-    fmt.Println("=== 2. OPERACIONES COMPLEJAS ===")
+    fmt.Println("--- 1. OPERACIONES COMPLEJAS ---")
 
     var oa int     = 6
     var ob int     = -4
@@ -387,7 +387,7 @@ func main() {
 Salida esperada:
 
 ```text
-=== 2. OPERACIONES COMPLEJAS ===
+--- 1. OPERACIONES COMPLEJAS ---
 1: 6.666666666666666
 2: -6
 3: 14
