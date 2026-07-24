@@ -28,8 +28,8 @@ Descargue la versión más reciente desde la sección de Releases del repositori
 También puede clonar el repositorio:
 
 ```bash
-git clone https://github.com/MynorDaniel/EJ26_OLC1_3358109340901-202331039.git |
-git@github.com:MynorDaniel/EJ26_OLC1_3358109340901-202331039.git
+git clone git@github.com:MynorDaniel/GoLite.git |
+git@github.com:MynorDaniel/GoLite.git
 cd GoLite
 ```
 
